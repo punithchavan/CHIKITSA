@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import logo from "../assets/logo.jpg";
+import { useNavigate,Link } from "react-router-dom";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
+   const navigate = useNavigate();
+   
   const handleLogin = (e) => {
     e.preventDefault();
     console.log("Logging in with", email, password);
@@ -19,9 +21,7 @@ const LoginPage = () => {
           <h2 className="text-2xl font-semibold mb-2">Good to see you again</h2>
           <p className="text-sm mb-4">
             Don't have an Account?{" "}
-            <a href="#" className="text-blue-500 hover:underline">
-              Sign in
-            </a>
+            <Link to="/choose" className="text-blue-500 hover:underline">Sign up</Link>
           </p>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
