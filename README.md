@@ -1,11 +1,11 @@
 # CHIKITSA
 
 Dependencies to install:
-cd medical
-npm start
-npm install tailwindcss @tailwindcss/vite
-npm install react-router-dom
+-cd medical
+-npm start
+-npm install tailwindcss @tailwindcss/vite
+-npm install react-router-dom
 
 Done till Now
-Login Page
+-Login Page
 
