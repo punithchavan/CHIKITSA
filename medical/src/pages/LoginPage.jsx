@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import logo from "../assets/logo.jpg";
 import { useNavigate,Link } from "react-router-dom";
+import logo from "../assets/logo.png";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");

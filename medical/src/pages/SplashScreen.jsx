@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "../assets/logo.jpg";
+import logo from "../assets/logo.png"
 
 const SplashScreen = () => {
   const [fadeOut, setFadeOut] = useState(false);
@@ -23,10 +23,11 @@ const SplashScreen = () => {
       }`}
     >
       <img
-        src={ logo}
-        alt="Splash Screen"
-        className="w-64 h-64 object-cover rounded-lg shadow-lg"
-      />
+  src={logo}
+  alt="Splash Screen"
+  className="w-64 h-64 object-cover"
+/>
+
     </div>
   );
 };
