@@ -67,7 +67,7 @@ const LoginPage = () => {
 
         
         <div className="flex items-center">
-          <img src={logo} alt="Chikitsa Logo" className="w-32 h-32 object-contain" />
+          <img src={logo} alt="Chikitsa Logo" className="w-50 h-40 object-contain" />
         </div>
       </div>
     </div>

@@ -1,13 +1,17 @@
 import React from "react";
-import doctor from "../assets/doctor.webp"
-import patient from "../assets/patient.webp"
+import { useNavigate } from "react-router-dom";
+import doctor from "../assets/doctor.webp";
+import patient from "../assets/patient.webp";
 import logo from "../assets/logo.png";
+
 const AccountSelection = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="relative flex flex-col items-center justify-center h-screen w-screen bg-gray-100">
       {/* Logo at Top Right */}
       <img
-        src={ logo }
+        src={logo}
         alt="Chikitsa Logo"
         className="absolute top-6 right-6 h-16"
       />
@@ -27,7 +31,9 @@ const AccountSelection = () => {
               alt="Patient"
               className="w-40 h-40 rounded-2xl shadow-md mb-4"
             />
-            <button className="bg-black text-white px-8 py-3 rounded-lg text-xl font-medium">
+            <button className="bg-black text-white px-8 py-3 rounded-lg text-xl font-medium" 
+             onClick={() => navigate("/Psignup")}
+             >
               Patient
             </button>
           </div>
@@ -38,7 +44,10 @@ const AccountSelection = () => {
               alt="Doctor"
               className="w-40 h-40 rounded-2xl shadow-md mb-4"
             />
-            <button className="bg-black text-white px-8 py-3 rounded-lg text-xl font-medium">
+            <button
+              className="bg-black text-white px-8 py-3 rounded-lg text-xl font-medium"
+              onClick={() => navigate("/Dsignup")}
+            >
               Doctor
             </button>
           </div>
