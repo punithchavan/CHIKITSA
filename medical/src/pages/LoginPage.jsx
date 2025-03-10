@@ -15,7 +15,7 @@ const LoginPage = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-300 p-4">
-      <div className="bg-white p-8 md:p-10 rounded-2xl shadow-lg flex flex-col md:flex-row w-full max-w-md md:w-[600px] space-y-6 md:space-x-6">
+      <div className="bg-white p-8 md:p-10 rounded-2xl shadow-lg flex flex-col md:flex-row w-full max-w-md md:max-w-2xl space-y-6 md:space-x-6">
         
         {/* Left Side - Form */}
         <div className="flex-1">

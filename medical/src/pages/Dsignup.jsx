@@ -6,7 +6,7 @@ export default function DSignupForm() {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-200 p-4">
+    <div className="flex items-center justify-center min-h-screen bg-gray-200 p-4 text-m">
       <div className="bg-white p-6 md:p-8 rounded-xl shadow-md max-w-4xl w-full flex flex-col md:flex-row">
         {/* Form Section */}
         <div className="w-full md:w-2/3 md:pr-8">

@@ -18,7 +18,7 @@ const SplashScreen = () => {
 
   return (
     <div
-      className={`h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 transition-opacity duration-500 ease-in-out ${
+      className={`h-screen flex items-center justify-center bg-gray-100 transition-opacity duration-500 ease-in-out ${
         fadeOut ? "opacity-0" : "opacity-100"
       }`}
     >
