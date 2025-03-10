@@ -18,14 +18,14 @@ const SplashScreen = () => {
 
   return (
     <div
-      className={`h-screen flex items-center justify-center bg-gray-100 transition-opacity duration-500 ${
+      className={`h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 transition-opacity duration-500 ease-in-out ${
         fadeOut ? "opacity-0" : "opacity-100"
       }`}
     >
       <img
   src={logo}
   alt="Splash Screen"
-  className="w-64 h-64 object-cover"
+  className="max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg h-auto object-contain"
 />
 
     </div>
