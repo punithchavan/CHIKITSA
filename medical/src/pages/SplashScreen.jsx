@@ -8,7 +8,7 @@ const SplashScreen = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => setFadeOut(true), 2500); // Start fade-out
-    const redirectTimer = setTimeout(() => navigate("/login"), 2000); // Redirect after fade
+    const redirectTimer = setTimeout(() => navigate("/Home"), 2000); // Redirect after fade
 
     return () => {
       clearTimeout(timer);
