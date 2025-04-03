@@ -1,5 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import Service1 from "../../assets/Services1.jpg"
+import Service2 from "../../assets/Services2.jpg"
+import Service3 from "../../assets/Services3.jpg"
 const Services = () => {
     const navigate = useNavigate();
   return (
@@ -25,7 +28,7 @@ const Services = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Feature 1 */}
           <div className="text-center p-4 bg-white shadow-lg rounded-lg">
-            <img src="https://via.placeholder.com/150" alt="Encrypted Records" className="mx-auto mb-4" />
+            <img src={Service1} alt="Encrypted Records" className="mx-auto mb-4" />
             <h3 className="text-lg font-bold">Encrypted Records</h3>
             <p className="text-gray-600">
               Medical records are encrypted, accessible only to authorized healthcare providers.
@@ -33,7 +36,7 @@ const Services = () => {
           </div>
           {/* Feature 2 */}
           <div className="text-center p-4 bg-white shadow-lg rounded-lg">
-            <img src="https://via.placeholder.com/150" alt="Doctor Connection" className="mx-auto mb-4" />
+            <img src={Service2} alt="Doctor Connection" className="mx-auto mb-4" />
             <h3 className="text-lg font-bold">Doctor Connection</h3>
             <p className="text-gray-600">
               Connect with your healthcare providers and share medical information.
@@ -41,7 +44,7 @@ const Services = () => {
           </div>
           {/* Feature 3 */}
           <div className="text-center p-4 bg-white shadow-lg rounded-lg">
-            <img src="https://via.placeholder.com/150" alt="History Access" className="mx-auto mb-4" />
+            <img src={Service3} alt="History Access" className="mx-auto mb-4" />
             <h3 className="text-lg font-bold">History Access</h3>
             <p className="text-gray-600">
               Access your medical history and previous treatments anytime.

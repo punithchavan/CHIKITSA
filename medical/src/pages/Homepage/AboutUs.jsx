@@ -1,5 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import au1 from "../../assets/AU1.jpg";
+import au2 from "../../assets/AU2.jpg"
 const AboutUs = () => {
     const navigate = useNavigate();
   return (
@@ -28,19 +30,22 @@ const AboutUs = () => {
           Our mission is to revolutionize medical record management by providing an encrypted,
           centralized, and user-friendly platform for patients, doctors, and administrators.
         </p>
-
+    <div class="flex items-center space-x-4">
+      <div>
         <h2 className="text-2xl font-bold mt-8">Our Vision</h2>
         <p className="text-gray-600 mt-2">
           To create a future where healthcare data is effortlessly managed, securely stored,
           and instantly accessible for better patient care and decision-making. We want to drive
           innovation with the latest technology for better healthcare experiences.
         </p>
+        </div>
 
         {/* Images Section */}
         <div className="grid grid-cols-2 gap-6 mt-6">
-          <img src="https://via.placeholder.com/250" alt="Medical Illustration" className="rounded-lg shadow-md" />
-          <img src="https://via.placeholder.com/250" alt="Cloud Storage" className="rounded-lg shadow-md" />
+          <img src={au1} alt="Medical Illustration" className="rounded-lg shadow-md" />
+          <img src={au2} alt="Cloud Storage" className="rounded-lg shadow-md" />
         </div>
+      </div>
       </div>
 
       {/* Footer */}
