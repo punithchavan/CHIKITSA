@@ -8,6 +8,8 @@ import PSignupForm from "./pages/Psignup"
 import Home from "./pages/Homepage/Home"
 import Services from "./pages/Homepage/Services"
 import AboutUs from "./pages/Homepage/AboutUs";
+import Patientpage from "./pages/Patient/Patientpage";
+
 function App() {
   return (
     <Router>
@@ -19,7 +21,8 @@ function App() {
         <Route path="/PSignup" element={<PSignupForm/>} />
         <Route path="/Home" element={<Home/>} />
         <Route path="/Services" element={<Services/>} />
-        <Route path="/AboutUs" element={<AboutUs/>} />    
+        <Route path="/AboutUs" element={<AboutUs/>} />   
+        <Route path="/Patient" element={<Patientpage/>} /> 
         </Routes>
     </Router>
   );
