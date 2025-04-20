@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
 
 // Define Patient schema
 const patientSchema = new mongoose.Schema({
+  patient_id: { type: String, unique: true, required: true }, // Patient ID field
   name: { type: String, required: true },
   gender: { type: String, enum: ['male', 'female', 'other'], required: true },
   dob: { type: Date, required: true },
@@ -18,13 +19,34 @@ const patientSchema = new mongoose.Schema({
   created_at: { type: Date, default: Date.now }
 });
 
+// Pre-save hook for generating patient_id (PATxxxx)
+patientSchema.pre('save', function(next) {
+  if (!this.patient_id) {
+    // Generate a random 4-digit number for Patient ID
+    const randomId = Math.floor(1000 + Math.random() * 9000); // Generates a number between 1000 and 9999
+    this.patient_id = `PAT${randomId}`; // Prefix with 'PAT'
+  }
+  next();
+});
+
 // Define Doctor schema
 const doctorSchema = new mongoose.Schema({
+  doctor_id: { type: String, unique: true, required: true }, // Doctor ID field
   name: { type: String, required: true },
   specialty: { type: String, required: true },
   qualification: { type: String, required: true },
   contact_info: { type: String },
   availability: { type: String }
+});
+
+// Pre-save hook for generating doctor_id (DOCxxxx)
+doctorSchema.pre('save', function(next) {
+  if (!this.doctor_id) {
+    // Generate a random 4-digit number for Doctor ID
+    const randomId = Math.floor(1000 + Math.random() * 9000); // Generates a number between 1000 and 9999
+    this.doctor_id = `DOC${randomId}`; // Prefix with 'DOC'
+  }
+  next();
 });
 
 // Define Appointment schema
