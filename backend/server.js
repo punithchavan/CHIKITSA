@@ -45,6 +45,10 @@ app.post("/api/send-data", (req, res) => {
   res.json({ message: "Data received!", received: data });
 });
 
+app.post("/api/users",(req,res)=>{
+  const wh
+});
+
 app.listen(Port, () => {
   console.log("✅ Server running on http://localhost:5000");
 });
