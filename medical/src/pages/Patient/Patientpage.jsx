@@ -2,6 +2,8 @@ import React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import patientai from "../../assets/patientai.png";
+import chikitsa_logo from "../../assets/chikitsa_logo.png";
+import chikitsa_name from "../../assets/chikitsa_name.png";
 import { MdSettings } from "react-icons/md";
 
 function Patientpage() {
@@ -9,60 +11,24 @@ function Patientpage() {
 
   return (
     <>
-      {/* Main Container */}
-      <div className="flex flex-col lg:flex-row min-h-screen w-full bg-gray-700 p-4">
-        {/* Left Section */}
-        <div className="flex flex-col items-center w-full lg:w-1/4 p-4">
-          <img src={logo} alt="logo" className="h-24 w-auto" />
-          <img src={patientai} alt="patientai" className="h-20 w-auto mt-6" />
-          
-          <div className="bg-white text-lg rounded-md shadow-md p-4 mt-4 w-full max-w-[250px]">
-            <p className="py-2 font-bold">Name: <span className="font-normal">Ravi Kumar</span></p>
-            <p className="py-2 font-bold">Gender: <span className="font-normal">Male</span></p>
-            <p className="py-2 font-bold">Age: <span className="font-normal">24</span></p>
-            <p className="py-2 font-bold">Blood Group: <span className="font-normal">A+</span></p>
-            <p className="py-2 font-bold">Contact: <span className="font-normal">9876543210</span></p>
-          </div>
+      {/* Main div container */}
+      <div className="flex flex-col w-screen h-screen ">
+        {/*nagigation bar*/}
+        <div className="flex flex-row p-5 items-center justify-between h-max w-full shadow-md bg-white">
+        {/* Left side: logo + text */}
+        <div className="flex items-center">
+          <img src={chikitsa_logo} alt='chikitsa_logo' className="w-12 h-10" />
+          <p className="font-bold text-2xl ml-5">CHIKITSA</p>
+        </div>
+        {/* Right side: settings icon */}
+        <button>
+          <MdSettings size={30} color="black" />
+        </button>
         </div>
 
-        {/* Right Section */}
-        <div className="flex flex-col w-full lg:w-3/4 p-4">
-          {/* Navigation Buttons */}
-          <div className="flex flex-wrap justify-between items-center bg-gray-800 p-3 rounded-md shadow-md">
-            <div className="flex gap-4">
-              <button className="px-4 py-2 text-white hover:bg-gray-600 rounded-md">Home</button>
-              <button className="px-4 py-2 text-white hover:bg-gray-600 rounded-md">Schedule</button>
-              <button className="px-4 py-2 text-white hover:bg-gray-600 rounded-md">Medical History</button>
-            </div>
-            <button><MdSettings size={30} color="white" /></button>
-          </div>
-
-          {/* Content Section */}
-          <div className="flex flex-col gap-4 mt-4">
-            {/* Upcoming Appointment */}
-            <div className="bg-gray-800 text-white p-4 rounded-md shadow-md">
-              <p className="text-xl font-bold">Upcoming Appointment:</p>
-              <div className="bg-white text-gray-900 rounded-md shadow-md p-4 mt-3">
-                <p className="text-lg font-semibold">Date: 24 March 2025</p>
-                <p className="text-lg font-semibold">Doctor Name: Dr. Raj</p>
-                <p className="text-lg font-semibold">Hospital Name: Apollo</p>
-                <p className="text-lg font-semibold">Appointment Type: Follow Up</p>
-              </div>
-              <div className="flex justify-center mt-3">
-                <button className="bg-white text-gray-900 px-4 py-2 rounded-md font-bold shadow-md hover:bg-gray-300">
-                  Book a new appointment
-                </button>
-              </div>
-            </div>
-
-            {/* Recently Updated */}
-            <div className="bg-gray-800 text-white p-4 rounded-md shadow-md">
-              <p className="text-xl font-bold">Recently Updated:</p>
-              <div className="bg-white text-gray-900 p-4 rounded-md shadow-md mt-3">
-                <p className="text-lg">He took dash med</p>
-              </div>
-            </div>
-          </div>
+        {/*left pannel-> patient pic, details*/}
+        <div className="flex flex-col items-center p-3">
+          
         </div>
       </div>
     </>
