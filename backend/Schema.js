@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true },
   password_hash: { type: String, required: true },
-  role: { type: String, enum: ['admin', 'doctor', 'staff'], required: true },
+  role: { type: String, enum: ['admin', 'doctor', 'Patient'], required: true },
   created_at: { type: Date, default: Date.now }
 });
 

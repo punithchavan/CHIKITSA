@@ -3,6 +3,7 @@ const express = require("express");
 const mongoose =require("mongoose");
 const cors = require("cors");
 const { Patient, Doctor, Appointment, MedicalRecord, Schedule } = require('./schema');
+const bcrypt=require("bcrypt");
 const dotenv=require('dotenv');
 dotenv.config()
 
@@ -45,9 +46,19 @@ app.post("/api/send-data", (req, res) => {
   res.json({ message: "Data received!", received: data });
 });
 
-app.post("/api/users",(req,res)=>{
-  const wh
+app.post('/api/users', async (req, res) => {
+  try {
+    const { username, password, role } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({ username, password_hash: hashedPassword, role });
+    const savedUser = await newUser.save();
+    const { password_hash, ...userWithoutHash } = savedUser.toObject();
+    res.status(201).json(userWithoutHash);
+  } catch (error) {
+    res.status(500).json({ message: 'Could not create user', error: error.message });
+  }
 });
+
 
 app.listen(Port, () => {
   console.log("✅ Server running on http://localhost:5000");
