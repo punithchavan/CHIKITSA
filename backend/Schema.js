@@ -74,19 +74,32 @@ const medicalRecordSchema = new mongoose.Schema({
   pdf_path: { type: String }
 });
 
-// Define Schedule schema
-const scheduleSchema = new mongoose.Schema({
-  doctor_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Doctor', required: true },
-  day_of_week: { type: String, enum: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], required: true },
-  start_time: { type: String, required: true },
-  end_time: { type: String, required: true }
-});
+
 
 const adminSchema = new mongoose.Schema({
   name: { type: String, required: true },
   hospital_name: { type: String, required: true },
+  password_hash: { type: String, required: true },
+  active_connections: { type: Number, default: 0 }, // ✅ Add this line
   created_at: { type: Date, default: Date.now }
 });
+
+const bcrypt = require('bcrypt');
+
+adminSchema.pre('save', async function (next) {
+  if (this.isModified('password_hash')) {
+    try {
+      const salt = await bcrypt.genSalt(10);
+      this.password_hash = await bcrypt.hash(this.password_hash, salt);
+      next();
+    } catch (err) {
+      next(err);
+    }
+  } else {
+    next();
+  }
+});
+
 
 // Create models
 const User = mongoose.model('User', userSchema);
@@ -94,7 +107,6 @@ const Patient = mongoose.model('Patient', patientSchema);
 const Doctor = mongoose.model('Doctor', doctorSchema);
 const Appointment = mongoose.model('Appointment', appointmentSchema);
 const MedicalRecord = mongoose.model('MedicalRecord', medicalRecordSchema);
-const Schedule = mongoose.model('Schedule', scheduleSchema);
 const Admin = mongoose.model('Admin', adminSchema);
 
-module.exports = { User, Patient, Doctor, Appointment, MedicalRecord, Schedule, Admin };
+module.exports = { User, Patient, Doctor, Appointment, MedicalRecord, Admin };

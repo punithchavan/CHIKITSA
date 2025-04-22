@@ -4,17 +4,51 @@ import logo from "../../assets/logo.png";
 import patientai from "../../assets/patientAi.png";
 
 function Adminpage() {
+    const [adminDetails, setAdminDetails] = useState(null);
     const [patientIdInput, setPatientIdInput] = useState("");
     const [doctorIdInput, setDoctorIdInput] = useState("");
     const [activeConnections, setActiveConnections] = useState([]);
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
 
     useEffect(() => {
+        console.log("Calling backend for admin details...");
+        
+        // Get admin details from localStorage
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        
+        fetchAdminDetails();
         fetchActiveConnections();
     }, []);
 
+    const fetchAdminDetails = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/admin/stats');
+            if (response.ok) {
+                try {
+                    const data = await response.json();
+                    setAdminDetails(data);
+                } catch (jsonError) {
+                    console.error('Error parsing admin details JSON:', jsonError);
+                    const text = await response.text();
+                    console.error('Raw response:', text);
+                    setAdminDetails(null);
+                }
+            } else {
+                console.error('Failed to fetch admin details:', response.status);
+                const text = await response.text();
+                console.error('Error response body:', text);
+                setAdminDetails(null);
+            }
+        } catch (error) {
+            console.error('Error fetching admin details:', error);
+            setAdminDetails(null);
+        }
+    };
+
     const fetchActiveConnections = async () => {
         try {
-            const response = await fetch('/admin/active-connections');
+            const response = await fetch('http://localhost:5000/admin/active-connections');
             if (response.ok) {
                 const data = await response.json();
                 setActiveConnections(data);
@@ -27,27 +61,58 @@ function Adminpage() {
     };
 
     const handleConnect = async () => {
+        // Clear previous messages
+        setError("");
+        setSuccess("");
+        
+        // Input validation
+        if (!patientIdInput.trim()) {
+            setError("Patient ID is required");
+            return;
+        }
+        
+        if (!doctorIdInput.trim()) {
+            setError("Doctor ID is required");
+            return;
+        }
+        
         try {
-            const response = await fetch('/admin/connect', {
+            const response = await fetch('http://localhost:5000/admin/connect', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ patientId: patientIdInput, doctorId: doctorIdInput }),
+                body: JSON.stringify({ 
+                    patientId: patientIdInput, 
+                    doctorId: doctorIdInput 
+                }),
             });
 
             if (response.ok) {
                 console.log('Connection successful!');
+                setSuccess("Connection successfully created!");
                 fetchActiveConnections(); // Refetch to update the table
+                fetchAdminDetails(); // Refetch admin details to update active connection count
                 setPatientIdInput(""); // Clear input fields
                 setDoctorIdInput("");
             } else {
                 const errorData = await response.json();
+                setError(errorData.message || 'Failed to connect');
                 console.error('Failed to connect:', errorData.message || 'Something went wrong');
-                // Optionally, display an error message to the user
             }
         } catch (error) {
+            setError("Server error. Please try again.");
             console.error('Error connecting:', error);
+        }
+    };
+
+    // Get admin name from local storage
+    const getUserName = () => {
+        try {
+            const user = JSON.parse(localStorage.getItem("user") || "{}");
+            return user.username || adminDetails?.name || "Admin";
+        } catch (error) {
+            return "Admin";
         }
     };
 
@@ -75,7 +140,7 @@ function Adminpage() {
                     />
                     <div className="bg-[#f4f4f4] text-gray-800 w-[90%] rounded-lg text-sm leading-relaxed shadow-lg flex flex-col justify-center px-6 py-4 space-y-4 font-poppins">
                         <p className="text-lg font-semibold">
-                            <strong>Name:</strong> Mukesh
+                            <strong>Admin Username:</strong> {getUserName()}
                         </p>
                         <p className="text-lg font-semibold">
                             <strong>Admin Level:</strong> 1
@@ -87,7 +152,7 @@ function Adminpage() {
                             <strong>Total Patients:</strong> 2,450
                         </p>
                         <p className="text-lg font-semibold">
-                            <strong>Active Connections:</strong> {activeConnections.length}
+                            <strong>Active Connections:</strong> {adminDetails?.active_connections || activeConnections.length || 0}
                         </p>
                     </div>
                 </div>
@@ -125,6 +190,19 @@ function Adminpage() {
                             </button>
                         </div>
 
+                        {/* Error/Success Messages */}
+                        {error && (
+                            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative w-full">
+                                <span className="block sm:inline">{error}</span>
+                            </div>
+                        )}
+                        
+                        {success && (
+                            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative w-full">
+                                <span className="block sm:inline">{success}</span>
+                            </div>
+                        )}
+
                         {/* Active Connections Table */}
                         <div className="bg-white p-6 rounded-xl shadow-lg w-full">
                             <h3 className="text-2xl font-semibold text-gray-700 mb-4">
@@ -136,16 +214,17 @@ function Adminpage() {
                                     <div className="w-1/3">Doctor ID</div>
                                     <div className="w-1/3">Status</div>
                                 </div>
-                                {activeConnections.map(connection => (
-                                    <div key={`${connection.patientId}-${connection.doctorId}`} className="flex text-gray-600 mt-4 text-center">
-                                        <div className="w-1/3">{connection.patientId}</div>
-                                        <div className="w-1/3">{connection.doctorId}</div>
-                                        <div className="w-1/3 text-green-600 font-semibold">
-                                            {connection.status}
+                                {activeConnections.length > 0 ? (
+                                    activeConnections.map((connection, index) => (
+                                        <div key={`${connection.patientId}-${connection.doctorId}-${index}`} className="flex text-gray-600 mt-4 text-center">
+                                            <div className="w-1/3">{connection.patientId}</div>
+                                            <div className="w-1/3">{connection.doctorId}</div>
+                                            <div className="w-1/3 text-green-600 font-semibold">
+                                                {connection.status}
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                                {activeConnections.length === 0 && (
+                                    ))
+                                ) : (
                                     <div className="flex text-gray-600 mt-4 text-center">
                                         <div className="w-full">No active connections found.</div>
                                     </div>
