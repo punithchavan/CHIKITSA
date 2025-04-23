@@ -64,15 +64,26 @@ const appointmentSchema = new mongoose.Schema({
 
 // Define Medical Record schema
 const medicalRecordSchema = new mongoose.Schema({
-  patient_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
-  doctor_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Doctor', required: true },
-  appointment_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment'},
-  diagnosis: { type: String },
-  prescription: { type: String },
-  tests_suggested: { type: String },
-  record_date: { type: Date, default: Date.now },
-  pdf_path: { type: String }
+  patient_id: {
+    type: String,
+    required: true
+  },
+  doctor_id: {
+    type: String,
+    required: true
+  },
+  pdf: {
+    type: String, 
+    required: true
+  },
+  uploadedAt: {
+    type: Date,
+    default: Date.now
+  }
 });
+
+  
+
 
 
 

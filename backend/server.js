@@ -6,6 +6,22 @@ const { User, Patient, Doctor, Appointment, MedicalRecord, Admin } = require('./
 const bcrypt = require("bcrypt");
 const dotenv = require('dotenv');
 dotenv.config();
+const fs = require('fs');
+
+const multer = require('multer');
+const path = require('path');
+const { exec } = require('child_process');
+// Configure multer
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/'); // Save uploaded PDFs here
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+    }
+});
+const upload = multer({ storage: storage });
+
 
 const mongoURL = process.env.MongoURL;
 const Port = process.env.PORT;
@@ -28,6 +44,8 @@ mongoose.connection.on('error', (err) => {
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+
 
 // Route to create a new user (Admin, Doctor, or Patient)
 app.post('/api/users', async (req, res) => {
@@ -252,6 +270,43 @@ app.post('/admin/update-appointment-status', async (req, res) => {
     } catch (error) {
         console.error('Error updating appointment status:', error);
         res.status(500).json({ message: 'Failed to update appointment status.' });
+    }
+});
+
+const fileUpload = multer({ dest: 'uploads/' });
+
+app.post('/upload-record', fileUpload.single('file'), async (req, res) => {
+    const { patientId, doctorId } = req.body;
+    const uploadedFilePath = req.file.path;
+    const encryptedOutputPath = `encrypted/${req.file.filename}.json`;
+
+    try {
+        // Ensure 'encrypted/' folder exists
+        if (!fs.existsSync('encrypted')) {
+            fs.mkdirSync('encrypted');
+        }
+
+        // Run Python script to encrypt the uploaded file
+        const command = `python3 Encrypt.py "${uploadedFilePath}" "${encryptedOutputPath}"`;
+        exec(command, async (error, stdout, stderr) => {
+            if (error) {
+                console.error('Encryption error:', stderr);
+                return res.status(500).json({ message: 'Encryption failed' });
+            }
+
+            // Save encrypted record in DB
+            const newRecord = new MedicalRecord({
+                patient_id: patientId,
+                doctor_id: doctorId,
+                pdf: encryptedOutputPath
+            });
+
+            await newRecord.save();
+            res.status(201).json({ message: 'File uploaded and encrypted successfully' });
+        });
+    } catch (error) {
+        console.error('Upload or DB error:', error);
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
