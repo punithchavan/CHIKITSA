@@ -3,15 +3,50 @@ import { useNavigate, Link } from "react-router-dom";
 import logo from "../assets/logo.png";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState("");
+  const [username, setusername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    console.log("Logging in with", email, password);
+  
+    try {
+      const response = await fetch("http://localhost:5000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,  // e.g. "punith"
+          password   // e.g. "admin123"
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        alert("Login successful");
+        localStorage.setItem("user", JSON.stringify(data.user));  // Store user data excluding password
+  
+        // Navigate based on user role
+        if (data.user.role === "Admin") {
+          navigate("/Admin");
+        } else if (data.user.role === "Doctor") {
+          navigate("/Doctor");
+        } else if (data.user.role === "Patient") {
+          navigate("/Patient");
+        }
+      } else {
+        alert(data.error);  // Show error from the server
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Server error, please try again later");
+    }
   };
+  
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-300 p-4">
@@ -26,12 +61,12 @@ const LoginPage = () => {
           </p>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium">Email address</label>
+              <label className="block text-sm font-medium">Username</label>
               <input
-                type="email"
+                type="text"
                 className="w-full p-3 border rounded mt-1 focus:ring focus:ring-blue-300 text-sm"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={username}
+                onChange={(e) => setusername(e.target.value)}
                 required
               />
             </div>

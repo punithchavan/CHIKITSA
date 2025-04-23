@@ -1,10 +1,22 @@
 import React, { useState } from "react";
-import { MdSettings } from "react-icons/md";
+import { MdSettings, MdClose } from "react-icons/md";
 import logo from "../../assets/logo.png";
 import patientai from "../../assets/patientai.png";
 
 function Doctorpage() {
   const [selectedTab, setSelectedTab] = useState("schedule");
+  const [showModal, setShowModal] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+
+  const handlePatientClick = (patient) => {
+    setSelectedPatient(patient);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedPatient(null);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f0f0f0] overflow-hidden">
@@ -107,9 +119,10 @@ function Doctorpage() {
                     reason: "Nutritional Counseling",
                   },
                 ].map((patient, idx) => (
-                  <div
+                  <button
                     key={idx}
-                    className="border border-gray-300 rounded-xl p-4 mb-4 shadow-md bg-white"
+                    className="border border-gray-300 rounded-xl p-4 mb-4 shadow-md bg-white hover:bg-gray-200 text-left w-full"
+                    onClick={() => handlePatientClick(patient)}
                   >
                     <p className="text-lg font-semibold text-gray-800">
                       Name: {patient.name}
@@ -120,7 +133,7 @@ function Doctorpage() {
                     <p className="text-gray-700">
                       Reason for Visit: {patient.reason}
                     </p>
-                  </div>
+                  </button>
                 ))}
               </div>
             </>
@@ -129,7 +142,7 @@ function Doctorpage() {
               <h2 className="text-3xl font-bold text-gray-700 mb-6 text-center">
                 Patient List
               </h2>
-              <div className="bg-white w-full max-w-3xl unded-xl shadow-lg p-4 overflow-y-auto h-[70vh] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
+              <div className="bg-white w-full max-w-3xl rounded-xl shadow-lg p-4 overflow-y-auto h-[70vh] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
                 {[
                   {
                     name: "Ravi Kumar",
@@ -168,9 +181,10 @@ function Doctorpage() {
                     condition: "BP Monitoring",
                   },
                 ].map((patient, idx) => (
-                  <div
+                  <button
                     key={idx}
-                    className="border border-gray-300 rounded-xl p-4 mb-4 shadow-md bg-white"
+                    className="border border-gray-300 rounded-xl p-4 mb-4 shadow-md bg-white hover:bg-gray-200 text-left w-full"
+                    onClick={() => handlePatientClick(patient)}
                   >
                     <p className="text-lg font-semibold text-gray-800">
                       Name: {patient.name}
@@ -180,7 +194,7 @@ function Doctorpage() {
                     <p className="text-gray-700">
                       Condition: {patient.condition}
                     </p>
-                  </div>
+                  </button>
                 ))}
               </div>
             </>
@@ -190,6 +204,81 @@ function Doctorpage() {
           </footer>
         </div>
       </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-200 bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-150 h-150 p-6 relative">
+            <button
+              onClick={closeModal}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            >
+              <MdClose className="text-2xl" />
+            </button>
+            <div className="w-full h-1/3 flex flex-col">
+              <h2 className="text-2xl font-bold text-black text-left mt-8">
+                Status of the Appointment
+              </h2>
+
+              {/* Boxes with outlines */}
+              <div className="flex justify-between mt-8">
+                <div className="w-60 p-4 border-2 border-gray-300 rounded-lg text-center flex items-center justify-center gap-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>{" "}
+                  {/* Red dot */}
+                  Cancelled
+                </div>
+                <div className="w-60 p-4 border-2 border-gray-300 rounded-lg text-center flex items-center justify-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>{" "}
+                  {/* Green dot */}
+                  Completed
+                </div>
+              </div>
+            </div>
+            <div className="w-full h-1/3 flex flex-col">
+              <h2 className="text-2xl font-bold text-black text-left mt-8">
+                Medical Records
+              </h2>
+
+              {/* Description */}
+              <textarea
+                className="mt-4 p-4 border-2 border-gray-300 rounded-lg h-32 resize-none"
+                placeholder="Enter medical records description here..."
+                rows="4"
+              />
+            </div>
+            {/* PDF Upload Box */}
+
+            <div className="w-full h-1/3 flex flex-col">
+              <h2 className="text-2xl font-bold text-black text-left mt-8">
+                Report Link
+              </h2>
+
+              {/* PDF Upload Box */}
+              <div className="mt-6">
+                <label className="block text-lg font-semibold text-gray-700">
+                  Upload PDF:
+                </label>
+                <div className="mt-8">
+                  {/* Hidden File Input */}
+                  <input
+                    type="file"
+                    id="files"
+                    accept=".pdf"
+                    className="hidden" // Hides the default file input
+                  />
+                  {/* Label that acts as a button */}
+                  <label
+                    htmlFor="files"
+                    className="p-4 border-2 border-gray-300 rounded-lg text-center cursor-pointer bg-white-500 text-black"
+                  >
+                    Select File
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
