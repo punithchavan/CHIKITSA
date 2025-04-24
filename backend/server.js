@@ -1,4 +1,4 @@
-// backend/server.js
+// Updated server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -7,21 +7,20 @@ const bcrypt = require("bcrypt");
 const dotenv = require('dotenv');
 dotenv.config();
 const fs = require('fs');
-
 const multer = require('multer');
 const path = require('path');
 const { exec } = require('child_process');
+
 // Configure multer
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/'); // Save uploaded PDFs here
+        cb(null, 'uploads/');
     },
     filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+        cb(null, Date.now() + path.extname(file.originalname));
     }
 });
 const upload = multer({ storage: storage });
-
 
 const mongoURL = process.env.MongoURL;
 const Port = process.env.PORT;
@@ -31,12 +30,10 @@ mongoose.connect(mongoURL, {
     useUnifiedTopology: true,
 });
 
-// When successfully connected
 mongoose.connection.on('connected', () => {
     console.log('✅ MongoDB connected successfully');
 });
 
-// When connection throws an error
 mongoose.connection.on('error', (err) => {
     console.error('❌ MongoDB connection error:', err);
 });
@@ -45,7 +42,54 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+if (!fs.existsSync('uploads')) {
+    fs.mkdirSync('uploads');
+}
 
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+app.post("/login", async (req, res) => {
+    const { username, password } = req.body;
+
+    try {
+        const user = await User.findOne({ username });
+        if (!user) return res.status(400).json({ error: "User not found" });
+
+        const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+        if (!isPasswordValid) return res.status(401).json({ error: "Incorrect password" });
+
+        const { password_hash, ...userWithoutHash } = user.toObject();
+        res.json({ message: "Login successful", user: userWithoutHash });
+
+    } catch (err) {
+        console.error("Login error:", err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// Upload medical record
+app.post('/api/upload-medical-record', upload.single('file'), async (req, res) => {
+    try {
+        const { patientId, doctorId, description } = req.body;
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+
+        const newRecord = new MedicalRecord({
+            patient_id: patientId,
+            doctor_id: doctorId,
+            description,
+            pdf: req.file.path
+        });
+
+        await newRecord.save();
+        res.status(201).json({ message: 'Medical record uploaded successfully' });
+    } catch (error) {
+        console.error('Error uploading medical record:', error);
+        res.status(500).json({ message: 'Failed to upload medical record' });
+    }
+});
 
 // Route to create a new user (Admin, Doctor, or Patient)
 app.post('/api/users', async (req, res) => {
@@ -83,6 +127,7 @@ app.post('/api/users', async (req, res) => {
             // Create new doctor profile
             const newDoctor = new Doctor({
                 name,
+                username,
                 gender,
                 age,
                 blood_group,
@@ -102,6 +147,7 @@ app.post('/api/users', async (req, res) => {
             // Create new patient profile
             const newPatient = new Patient({
                 name,
+                username,
                 gender,
                 dob,
                 age,
@@ -120,6 +166,7 @@ app.post('/api/users', async (req, res) => {
 
             const newAdmin = new Admin({
                 name,
+                username,
                 hospital_name,
                 password_hash: hashedPassword  // ✅ Add this line to store hashed password
             });
@@ -273,44 +320,101 @@ app.post('/admin/update-appointment-status', async (req, res) => {
     }
 });
 
-const fileUpload = multer({ dest: 'uploads/' });
-
-app.post('/upload-record', fileUpload.single('file'), async (req, res) => {
-    const { patientId, doctorId } = req.body;
-    const uploadedFilePath = req.file.path;
-    const encryptedOutputPath = `encrypted/${req.file.filename}.json`;
-
+  // Route to get doctor details by username
+app.get('/api/doctor/:username', async (req, res) => {
     try {
-        // Ensure 'encrypted/' folder exists
-        if (!fs.existsSync('encrypted')) {
-            fs.mkdirSync('encrypted');
+        const username = req.params.username;
+        
+        // First find the user
+        const user = await User.findOne({ username, role: 'Doctor' });
+        console.log(user)
+        if (!user) {
+            return res.status(404).json({ message: 'Doctor user not found.' });
         }
-
-        // Run Python script to encrypt the uploaded file
-        const command = `python3 Encrypt.py "${uploadedFilePath}" "${encryptedOutputPath}"`;
-        exec(command, async (error, stdout, stderr) => {
-            if (error) {
-                console.error('Encryption error:', stderr);
-                return res.status(500).json({ message: 'Encryption failed' });
-            }
-
-            // Save encrypted record in DB
-            const newRecord = new MedicalRecord({
-                patient_id: patientId,
-                doctor_id: doctorId,
-                pdf: encryptedOutputPath
-            });
-
-            await newRecord.save();
-            res.status(201).json({ message: 'File uploaded and encrypted successfully' });
-        });
+        
+        // Find doctor profile using uid field which should match user._id
+        const doctor = await Doctor.findOne({username});
+        if (!doctor) {
+            return res.status(404).json({ message: 'Doctor profile not found.' });
+        }
+        
+        res.json(doctor);
     } catch (error) {
-        console.error('Upload or DB error:', error);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error fetching doctor details:', error);
+        res.status(500).json({ message: 'Failed to get doctor details.' });
+    }
+});
+
+// Route to get today's appointments for a doctor
+app.get('/api/doctor/:doctorId/appointments/today', async (req, res) => {
+    try {
+        const doctorId = req.params.doctorId;
+        
+        // Get today's date
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        // Find appointments for the doctor that are scheduled for today
+        const appointments = await Appointment.find({
+            doctor_id: doctorId,
+            appointment_date: { $gte: today, $lt: tomorrow },
+            status: 'scheduled'
+        }).populate('patient_id');
+        
+        const formattedAppointments = appointments.map(appointment => {
+            const patient = appointment.patient_id;
+            return {
+                name: patient.name,
+                date: appointment.appointment_date.toLocaleDateString('en-IN'),
+                reason: appointment.notes || 'General Consultation',
+                patientId: patient._id,
+                appointmentId: appointment._id
+            };
+        });
+        
+        res.json(formattedAppointments);
+    } catch (error) {
+        console.error('Error fetching appointments:', error);
+        res.status(500).json({ message: 'Failed to get appointments.' });
+    }
+});
+
+// Route to get all patients assigned to a doctor
+app.get('/api/doctor/:doctorId/patients', async (req, res) => {
+    try {
+        const doctorId = req.params.doctorId;
+        
+        // Find all appointments for this doctor to get the associated patients
+        const appointments = await Appointment.find({
+            doctor_id: doctorId
+        }).populate('patient_id');
+        
+        // Extract unique patients from appointments
+        const patientMap = new Map();
+        appointments.forEach(appointment => {
+            const patient = appointment.patient_id;
+            if (patient && !patientMap.has(patient._id.toString())) {
+                patientMap.set(patient._id.toString(), {
+                    id: patient._id,
+                    name: patient.name,
+                    age: patient.age,
+                    contact: patient.contact_info || 'Not provided',
+                    condition: appointment.notes || 'General Checkup'
+                });
+            }
+        });
+        
+        const patientList = Array.from(patientMap.values());
+        res.json(patientList);
+    } catch (error) {
+        console.error('Error fetching patients:', error);
+        res.status(500).json({ message: 'Failed to get patient list.' });
     }
 });
 
 
 app.listen(Port, () => {
-    console.log("✅ Server running on http://localhost:5000");
+    console.log(`✅ Server running on http://localhost:${Port})`)
 });

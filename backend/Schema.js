@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema({
 const patientSchema = new mongoose.Schema({
   patient_id: { type: String, unique: true }, // Patient ID field
   name: { type: String, required: true },
+  username: { type: String, required: true },
   gender: { type: String, enum: ['male', 'female', 'other'], required: true },
   dob: { type: Date },
   age: { type: Number, required: true }, 
@@ -35,6 +36,7 @@ patientSchema.pre('save', function(next) {
 const doctorSchema = new mongoose.Schema({
   doctor_id: { type: String, unique: true },
   name: { type: String, required: true },
+  username: { type: String, required: true },
   gender: { type: String, enum: ['male', 'female', 'other'] },
   age: { type: Number }, 
   blood_group: { type: String, enum: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'] }, 
@@ -62,7 +64,6 @@ const appointmentSchema = new mongoose.Schema({
   notes: { type: String }
 });
 
-// Define Medical Record schema
 const medicalRecordSchema = new mongoose.Schema({
   patient_id: {
     type: String,
@@ -76,6 +77,10 @@ const medicalRecordSchema = new mongoose.Schema({
     type: String, 
     required: true
   },
+  description: {
+    type: String,
+    default: ''
+  },
   uploadedAt: {
     type: Date,
     default: Date.now
@@ -83,12 +88,9 @@ const medicalRecordSchema = new mongoose.Schema({
 });
 
   
-
-
-
-
 const adminSchema = new mongoose.Schema({
   name: { type: String, required: true },
+  username: { type: String, required: true },
   hospital_name: { type: String, required: true },
   password_hash: { type: String, required: true },
   active_connections: { type: Number, default: 0 }, // ✅ Add this line
