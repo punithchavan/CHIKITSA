@@ -139,19 +139,37 @@ function Doctorpage() {
       <div className="flex flex-1 flex-col md:flex-row">
         {/* Left Sidebar */}
         <div className="bg-[#fff] text-gray-200 w-full md:w-[22%] flex flex-col items-center py-8 gap-6 shadow-inner border-r-2 border-[#ccc]">
-          <img src={patientai} alt="Doctor avatar" className="w-24 h-24 rounded-full border-2 border-gray-400 shadow-md" />
+          <img
+            src={patientai}
+            alt="Doctor avatar"
+            className="w-24 h-24 rounded-full border-2 border-gray-400 shadow-md"
+          />
           {loading ? (
             <div className="text-gray-800">Loading doctor details...</div>
           ) : error ? (
             <div className="text-red-600">{error}</div>
           ) : (
-            <div className="text-gray-800 text-sm space-y-2">
-              <p><strong>Name:</strong> {doctorDetails.name}</p>
-              <p><strong>Gender:</strong> {doctorDetails.gender}</p>
-              <p><strong>Age:</strong> {doctorDetails.age}</p>
-              <p><strong>Blood Group:</strong> {doctorDetails.blood_group}</p>
-              <p><strong>Contact:</strong> {doctorDetails.contact_info}</p>
-              <p><strong>Doctor ID:</strong> {doctorDetails.doctor_id}</p>
+            <div className="bg-[#f4f4f4] text-gray-800 w-[90%] rounded-lg text-sm leading-relaxed shadow-lg flex flex-col justify-center px-6 py-4 space-y-4 font-poppins">
+              <p className="text-lg font-semibold">
+                <strong>Name:</strong> {doctorDetails.name || "Dr. Raj Chopra"}
+              </p>
+              <p className="text-lg font-semibold">
+                <strong>Gender:</strong> {doctorDetails.gender || "Male"}
+              </p>
+              <p className="text-lg font-semibold">
+                <strong>Age:</strong> {doctorDetails.age || "32"}
+              </p>
+              <p className="text-lg font-semibold">
+                <strong>Blood Group:</strong> {doctorDetails.blood_group || "O+"}
+              </p>
+              <p className="text-lg font-semibold">
+                <strong>Contact:</strong> {doctorDetails.contact_info || "9xxxx 9xxxx"}
+              </p>
+              {doctorDetails.doctor_id && (
+                <p className="text-lg font-semibold">
+                  <strong>Doctor ID:</strong> {doctorDetails.doctor_id}
+                </p>
+              )}
             </div>
           )}
         </div>
