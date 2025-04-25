@@ -75,7 +75,6 @@ const medicalRecordSchema = new mongoose.Schema({
   },
   pdf: {
     type: String, 
-    required: true
   },
   description: {
     type: String,
