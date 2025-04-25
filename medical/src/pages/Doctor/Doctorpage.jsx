@@ -16,6 +16,7 @@ function Doctorpage() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [appointmentStatus, setAppointmentStatus] = useState("");
   const [error, setError] = useState(null);
+  const [existingMedicalRecord, setExistingMedicalRecord] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,22 +57,72 @@ function Doctorpage() {
     setSelectedFile(e.target.files[0]);
   };
 
-  const handleUploadMedicalRecord = async () => {
-    if (!selectedFile || !selectedPatient) return;
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('patientId', selectedPatient.patientId);
-    formData.append('doctorId', doctorDetails._id);
-    formData.append('description', description);
-
+  const fetchExistingMedicalRecord = async (patientName) => {
     try {
-      await axios.post('http://localhost:5000/api/upload-medical-record', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      alert("Medical record uploaded successfully");
-      setShowModal(false);
+      // Find patient by name to get their patient_id
+      const patientResponse = await axios.get(`http://localhost:5000/api/patient/by-name/${patientName}`);
+      
+      if (patientResponse.data && patientResponse.data.patient_id) {
+        const medicalRecordResponse = await axios.get(
+          `http://localhost:5000/api/medical-record/${patientResponse.data.patient_id}/${doctorDetails._id}`
+        );
+        
+        if (medicalRecordResponse.data) {
+          setExistingMedicalRecord(medicalRecordResponse.data);
+          setDescription(medicalRecordResponse.data.description || "");
+          return true;
+        }
+      }
+      return false;
     } catch (error) {
-      alert("Failed to upload medical record");
+      console.log("No existing medical record found or error fetching:", error);
+      return false;
+    }
+  };
+
+  const handleMedicalRecordSubmit = async () => {
+    if (!selectedPatient) return;
+    
+    try {
+      // Find patient by name
+      const patientResponse = await axios.get(`http://localhost:5000/api/patient/by-name/${selectedPatient.name}`);
+      if (!patientResponse.data) {
+        alert("Patient not found.");
+        return;
+      }
+
+      const patientId = patientResponse.data.patient_id;
+      const doctorId = doctorDetails._id;
+
+      const formData = new FormData();
+      if (selectedFile) {
+        formData.append('file', selectedFile);
+      }
+      formData.append('patientId', patientId);
+      formData.append('doctorId', doctorId);
+      formData.append('description', description);
+      
+      // If we have an existing record, update it
+      if (existingMedicalRecord) {
+        formData.append('recordId', existingMedicalRecord._id);
+        await axios.put('http://localhost:5000/api/update-medical-record', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        alert("Medical record updated successfully");
+      } else {
+        // Otherwise create a new one
+        await axios.post('http://localhost:5000/api/create-medical-record', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        alert("Medical record created successfully");
+      }
+      
+      setShowModal(false);
+      setSelectedFile(null);
+      setDescription("");
+      setExistingMedicalRecord(null);
+    } catch (error) {
+      alert(`Failed to ${existingMedicalRecord ? 'update' : 'create'} medical record: ${error.message}`);
     }
   };
 
@@ -92,9 +143,19 @@ function Doctorpage() {
     }
   };
 
-  const handlePatientClick = (patient) => {
+  const handlePatientClick = async (patient) => {
     setSelectedPatient(patient);
     setAppointmentStatus(patient.status || "scheduled");
+    
+    // Check if there's an existing medical record
+    const hasExistingRecord = await fetchExistingMedicalRecord(patient.name);
+    
+    // If no existing record, reset the form
+    if (!hasExistingRecord) {
+      setDescription("");
+      setSelectedFile(null);
+    }
+    
     setShowModal(true);
   };
 
@@ -103,6 +164,7 @@ function Doctorpage() {
     setSelectedPatient(null);
     setSelectedFile(null);
     setDescription("");
+    setExistingMedicalRecord(null);
     setAppointmentStatus("");
   };
 
@@ -254,7 +316,9 @@ function Doctorpage() {
             </div>
 
             {/* Medical Record Description */}
-            <h2 className="text-2xl font-bold text-black mt-8">Medical Records</h2>
+            <h2 className="text-2xl font-bold text-black mt-8">
+              {existingMedicalRecord ? 'Update Medical Record' : 'Create Medical Record'}
+            </h2>
             <textarea
               className="mt-4 p-4 border-2 border-gray-300 rounded-lg h-32 resize-none w-full"
               placeholder="Enter medical records description here..."
@@ -271,12 +335,25 @@ function Doctorpage() {
                 <label htmlFor="files" className="p-4 border-2 border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 text-black">
                   {selectedFile ? selectedFile.name : "Select File"}
                 </label>
-                {selectedFile && (
-                  <button onClick={handleUploadMedicalRecord} className="p-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                    Upload Record
-                  </button>
-                )}
+                <button 
+                  onClick={handleMedicalRecordSubmit} 
+                  className="p-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  {existingMedicalRecord ? 'Update Record' : 'Create Record'}
+                </button>
               </div>
+              {existingMedicalRecord && existingMedicalRecord.pdf && (
+                <div className="mt-4">
+                  <a 
+                    href={`http://localhost:5000/${existingMedicalRecord.pdf}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline"
+                  >
+                    View Existing Document
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>
