@@ -1,62 +1,122 @@
 import React, { useState, useEffect } from "react";
-import { MdSettings } from "react-icons/md";
+import { MdSettings, MdRefresh, MdError } from "react-icons/md";
 import logo from "../../assets/logo.png";
 import patientai from "../../assets/patientAi.png";
 
 function Adminpage() {
     const [adminDetails, setAdminDetails] = useState(null);
+    const [dashboardStats, setDashboardStats] = useState({
+        activeDoctors: 0,
+        activePatients: 0,
+        activeConnections: 0
+    });
     const [patientIdInput, setPatientIdInput] = useState("");
     const [doctorIdInput, setDoctorIdInput] = useState("");
     const [activeConnections, setActiveConnections] = useState([]);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+    const [isFetchingStats, setIsFetchingStats] = useState(false);
+    const [isFetchingConnections, setIsFetchingConnections] = useState(false);
 
+    // Fetch all data when component mounts
     useEffect(() => {
-        console.log("Calling backend for admin details...");
+        console.log("Initial data loading started");
         
-        // Get admin details from localStorage
-        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const fetchAllData = async () => {
+            setIsLoading(true);
+            try {
+                await Promise.all([
+                    fetchAdminDetails(),
+                    fetchActiveConnections(),
+                    fetchDashboardStats()
+                ]);
+            } catch (error) {
+                console.error("Error loading initial data:", error);
+                setError("Failed to load dashboard data. Please refresh the page.");
+            } finally {
+                setIsLoading(false);
+                console.log("All data loaded");
+            }
+        };
         
-        fetchAdminDetails();
-        fetchActiveConnections();
+        fetchAllData();
     }, []);
 
+    const fetchDashboardStats = async () => {
+        console.log("Fetching dashboard stats...");
+        setIsFetchingStats(true);
+        try {
+            const response = await fetch('http://localhost:5000/api/admin/dashboard-stats');
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Dashboard stats received:", data);
+                setDashboardStats(data);
+                return data;
+            } else {
+                console.error('Failed to fetch dashboard stats:', response.status);
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                throw new Error("Failed to fetch dashboard stats");
+            }
+        } catch (error) {
+            console.error('Error fetching dashboard stats:', error);
+            return null;
+        } finally {
+            setIsFetchingStats(false);
+        }
+    };
+
     const fetchAdminDetails = async () => {
+        console.log("Fetching admin details...");
         try {
             const response = await fetch('http://localhost:5000/admin/stats');
             if (response.ok) {
                 try {
                     const data = await response.json();
+                    console.log("Admin details received:", data);
                     setAdminDetails(data);
+                    return data;
                 } catch (jsonError) {
                     console.error('Error parsing admin details JSON:', jsonError);
                     const text = await response.text();
                     console.error('Raw response:', text);
                     setAdminDetails(null);
+                    throw new Error("Invalid admin details format");
                 }
             } else {
                 console.error('Failed to fetch admin details:', response.status);
                 const text = await response.text();
                 console.error('Error response body:', text);
                 setAdminDetails(null);
+                throw new Error("Failed to fetch admin details");
             }
         } catch (error) {
             console.error('Error fetching admin details:', error);
             setAdminDetails(null);
+            return null;
         }
     };
 
     const fetchActiveConnections = async () => {
+        console.log("Fetching active connections...");
+        setIsFetchingConnections(true);
         try {
             const response = await fetch('http://localhost:5000/admin/active-connections');
             if (response.ok) {
                 const data = await response.json();
+                console.log("Active connections received:", data);
                 setActiveConnections(data);
+                return data;
             } else {
                 console.error('Failed to fetch active connections');
+                throw new Error("Failed to fetch active connections");
             }
         } catch (error) {
             console.error('Error fetching active connections:', error);
+            return [];
+        } finally {
+            setIsFetchingConnections(false);
         }
     };
 
@@ -77,6 +137,7 @@ function Adminpage() {
         }
         
         try {
+            console.log("Connecting patient and doctor...");
             const response = await fetch('http://localhost:5000/admin/connect', {
                 method: 'POST',
                 headers: {
@@ -91,10 +152,24 @@ function Adminpage() {
             if (response.ok) {
                 console.log('Connection successful!');
                 setSuccess("Connection successfully created!");
-                fetchActiveConnections(); // Refetch to update the table
-                fetchAdminDetails(); // Refetch admin details to update active connection count
-                setPatientIdInput(""); // Clear input fields
-                setDoctorIdInput("");
+                
+                // Refetch all data to update counts and connections
+                console.log("Refreshing data after connection...");
+                
+                // Use setTimeout to give the server a moment to update before refetching
+                setTimeout(async () => {
+                    try {
+                        await Promise.all([
+                            fetchDashboardStats(),
+                            fetchActiveConnections()
+                        ]);
+                    } catch (error) {
+                        console.error("Error refreshing data:", error);
+                    }
+                    
+                    setPatientIdInput(""); // Clear input fields
+                    setDoctorIdInput("");
+                }, 500);
             } else {
                 const errorData = await response.json();
                 setError(errorData.message || 'Failed to connect');
@@ -106,6 +181,26 @@ function Adminpage() {
         }
     };
 
+    // Sync admin counter with actual connection count (optional feature)
+    const syncConnectionCount = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/admin/sync-connections', {
+                method: 'POST'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                setSuccess(`Connections synced successfully. Count: ${data.count}`);
+                await fetchDashboardStats();
+            } else {
+                setError("Failed to sync connections");
+            }
+        } catch (error) {
+            console.error("Error syncing connections:", error);
+            setError("Server error while syncing connections");
+        }
+    };
+
     // Get admin name from local storage
     const getUserName = () => {
         try {
@@ -114,6 +209,11 @@ function Adminpage() {
         } catch (error) {
             return "Admin";
         }
+    };
+    
+    // Format numbers with commas for better readability
+    const formatNumber = (num) => {
+        return num ? num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "0";
     };
 
     return (
@@ -146,14 +246,30 @@ function Adminpage() {
                             <strong>Admin Level:</strong> 1
                         </p>
                         <p className="text-lg font-semibold">
-                            <strong>Total Doctors:</strong> 150
+                            <strong>Active Doctors:</strong> {isLoading || isFetchingStats ? "Loading..." : formatNumber(dashboardStats.activeDoctors)}
                         </p>
                         <p className="text-lg font-semibold">
-                            <strong>Total Patients:</strong> 2,450
+                            <strong>Active Patients:</strong> {isLoading || isFetchingStats ? "Loading..." : formatNumber(dashboardStats.activePatients)}
                         </p>
                         <p className="text-lg font-semibold">
-                            <strong>Active Connections:</strong> {adminDetails?.active_connections || activeConnections.length || 0}
+                            <strong>Active Connections:</strong> {isLoading || isFetchingStats ? "Loading..." : dashboardStats.activeConnections}
                         </p>
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={fetchDashboardStats}
+                                disabled={isFetchingStats}
+                                className={`mt-2 ${isFetchingStats ? 'bg-gray-300 cursor-not-allowed' : 'bg-gray-200 hover:bg-gray-300'} text-gray-700 py-2 px-4 rounded-lg text-sm font-medium shadow-sm flex items-center justify-center`}
+                            >
+                                {isFetchingStats ? 'Refreshing...' : 'Refresh Stats'}
+                                {!isFetchingStats && <MdRefresh className="ml-1" />}
+                            </button>
+                            <button 
+                                onClick={syncConnectionCount}
+                                className="mt-2 bg-blue-100 hover:bg-blue-200 text-blue-700 py-2 px-4 rounded-lg text-sm font-medium shadow-sm"
+                            >
+                                Sync Counts
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -192,7 +308,8 @@ function Adminpage() {
 
                         {/* Error/Success Messages */}
                         {error && (
-                            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative w-full">
+                            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative w-full flex items-center">
+                                <MdError className="mr-2" />
                                 <span className="block sm:inline">{error}</span>
                             </div>
                         )}
@@ -205,16 +322,27 @@ function Adminpage() {
 
                         {/* Active Connections Table */}
                         <div className="bg-white p-6 rounded-xl shadow-lg w-full">
-                            <h3 className="text-2xl font-semibold text-gray-700 mb-4">
-                                Active Connections
-                            </h3>
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-2xl font-semibold text-gray-700">
+                                    Active Connections ({activeConnections.length})
+                                </h3>
+                                <button 
+                                    onClick={fetchActiveConnections} 
+                                    disabled={isFetchingConnections}
+                                    className={`${isFetchingConnections ? 'bg-gray-300 cursor-not-allowed' : 'bg-gray-200 hover:bg-gray-300'} text-gray-700 px-3 py-1 rounded text-sm flex items-center`}>
+                                    {isFetchingConnections ? 'Refreshing...' : 'Refresh'}
+                                    {!isFetchingConnections && <MdRefresh className="ml-1" />}
+                                </button>
+                            </div>
                             <div className="w-full">
                                 <div className="flex font-semibold text-gray-700 border-b pb-2 text-center">
                                     <div className="w-1/3">Patient ID</div>
                                     <div className="w-1/3">Doctor ID</div>
                                     <div className="w-1/3">Status</div>
                                 </div>
-                                {activeConnections.length > 0 ? (
+                                {isLoading || isFetchingConnections ? (
+                                    <div className="text-center py-4 text-gray-500">Loading connections...</div>
+                                ) : activeConnections.length > 0 ? (
                                     activeConnections.map((connection, index) => (
                                         <div key={`${connection.patientId}-${connection.doctorId}-${index}`} className="flex text-gray-600 mt-4 text-center">
                                             <div className="w-1/3">{connection.patientId}</div>

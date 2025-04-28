@@ -257,7 +257,101 @@ app.post('/admin/connect', async (req, res) => {
 });
 
 // View admin active connection count and name
+// Route to get active admin stats (active doctors, active patients, active connections)
+// Updated /api/admin/dashboard-stats endpoint
+app.get('/api/admin/dashboard-stats', async (req, res) => {
+    try {
+        // Get counts of active doctors and patients
+        const activeAppointments = await Appointment.find({ status: 'scheduled' });
+        
+        // Get unique doctor and patient IDs from active appointments
+        const activeDoctorIds = new Set();
+        const activePatientIds = new Set();
+        
+        activeAppointments.forEach(appointment => {
+            activeDoctorIds.add(appointment.doctor_id.toString());
+            activePatientIds.add(appointment.patient_id.toString());
+        });
+        
+        // Instead of using the Admin.active_connections field,
+        // count the active connections directly from appointments
+        const activeConnectionsCount = activeAppointments.length;
+        
+        const stats = {
+            activeDoctors: activeDoctorIds.size,
+            activePatients: activePatientIds.size,
+            activeConnections: activeConnectionsCount
+        };
+        
+        console.log('Active dashboard stats being sent:', stats);
+        res.json(stats);
+        
+    } catch (error) {
+        console.error('Error fetching admin dashboard stats:', error);
+        res.status(500).json({ message: 'Failed to fetch dashboard statistics' });
+    }
+});
 
+// Also update the /admin/connect endpoint to not increment the counter
+// since we're now counting active connections directly
+app.post('/admin/connect', async (req, res) => {
+    const { patientId, doctorId } = req.body;
+
+    try {
+        const patient = await Patient.findOne({ patient_id: patientId });
+        const doctor = await Doctor.findOne({ doctor_id: doctorId });
+
+        if (!patient) {
+            return res.status(404).json({ message: 'Patient not found.' });
+        }
+        if (!doctor) {
+            return res.status(404).json({ message: 'Doctor not found.' });
+        }
+
+        const newAppointment = new Appointment({
+            patient_id: patient._id,
+            doctor_id: doctor._id,
+            appointment_date: new Date(),
+            appointment_time: 'Not Specified',
+            status: 'scheduled'
+        });
+
+        const savedAppointment = await newAppointment.save();
+
+        // Remove the Admin.updateOne call that increments active_connections
+        // We're now counting active connections directly from appointments
+
+        res.status(201).json({
+            message: 'Connection created successfully.',
+            appointment: savedAppointment
+        });
+
+    } catch (error) {
+        console.error('Error creating connection:', error);
+        res.status(500).json({ message: 'Failed to create connection.' });
+    }
+});
+
+// Update the update-appointment-status endpoint to not manipulate the counter
+app.post('/admin/update-appointment-status', async (req, res) => {
+    const { appointmentId, status } = req.body;
+
+    try {
+        const appointment = await Appointment.findByIdAndUpdate(appointmentId, { status }, { new: true });
+
+        if (!appointment) {
+            return res.status(404).json({ message: 'Appointment not found.' });
+        }
+
+        // Remove the Admin.updateOne calls that manipulate active_connections
+        // We're now counting active connections directly from appointments
+
+        res.json({ message: 'Appointment status updated.', appointment });
+    } catch (error) {
+        console.error('Error updating appointment status:', error);
+        res.status(500).json({ message: 'Failed to update appointment status.' });
+    }
+});
 // Updated admin/stats endpoint
 app.get('/admin/stats', async (req, res) => {
     try {
@@ -417,4 +511,29 @@ app.get('/api/doctor/:doctorId/patients', async (req, res) => {
 
 app.listen(Port, () => {
     console.log(`✅ Server running on http://localhost:${Port})`)
+});
+
+async function syncActiveConnectionsCount() {
+    try {
+        const activeAppointmentsCount = await Appointment.countDocuments({ status: 'scheduled' });
+        
+        // Update the admin model with the accurate count
+        await Admin.updateOne({}, { $set: { active_connections: activeAppointmentsCount } });
+        
+        console.log(`✅ Active connections synced. Count: ${activeAppointmentsCount}`);
+        return activeAppointmentsCount;
+    } catch (error) {
+        console.error('❌ Failed to sync active connections count:', error);
+        throw error;
+    }
+}
+
+// Add an endpoint to manually trigger synchronization
+app.post('/admin/sync-connections', async (req, res) => {
+    try {
+        const count = await syncActiveConnectionsCount();
+        res.json({ message: 'Active connections synced successfully', count });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to sync active connections' });
+    }
 });
