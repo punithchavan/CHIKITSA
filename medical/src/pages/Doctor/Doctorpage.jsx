@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { MdSettings, MdClose } from "react-icons/md";
 import logo from "../../assets/logo.png";
-import patientai from "../../assets/patientai.png";
+import patientai from "../../assets/doctor.webp";
 import axios from "axios";
 
 function Doctorpage() {
@@ -211,7 +211,7 @@ function Doctorpage() {
           ) : error ? (
             <div className="text-red-600">{error}</div>
           ) : (
-            <div className="bg-[#f4f4f4] text-gray-800 w-[90%] rounded-lg text-sm leading-relaxed shadow-lg flex flex-col justify-center px-6 py-4 space-y-4 font-poppins">
+            <div className="border-2 border-gray-300 rounded-xl p-6 bg-[#f4f4f4] shadow-lg w-[90%] flex flex-col gap-4 text-gray-800 text-lg leading-relaxed font-poppins ">
               <p className="text-lg font-semibold">
                 <strong>Name:</strong> {doctorDetails.name || "Dr. Raj Chopra"}
               </p>
@@ -302,18 +302,19 @@ function Doctorpage() {
             <h2 className="text-2xl font-bold text-black mt-4">Status of the Appointment</h2>
             <div className="flex justify-between mt-4">
               <button
-                className={`w-60 p-4 border-2 ${appointmentStatus === 'cancelled' ? 'border-red-500 bg-red-100' : 'border-gray-300'} rounded-lg`}
-                onClick={() => handleStatusChange('cancelled')}
-              >
-                Cancelled
-              </button>
-              <button
                 className={`w-60 p-4 border-2 ${appointmentStatus === 'completed' ? 'border-green-500 bg-green-100' : 'border-gray-300'} rounded-lg`}
                 onClick={() => handleStatusChange('completed')}
               >
                 Completed
               </button>
+              <button
+                className={`w-60 p-4 border-2 ${appointmentStatus === 'cancelled' ? 'border-red-500 bg-red-100' : 'border-gray-300'} rounded-lg`}
+                onClick={() => handleStatusChange('cancelled')}
+              >
+              Cancelled
+              </button>
             </div>
+
 
             {/* Medical Record Description */}
             <h2 className="text-2xl font-bold text-black mt-8">
