@@ -218,44 +218,6 @@ app.post("/login", async (req, res) => {
     }
 });
 
-app.post('/admin/connect', async (req, res) => {
-    const { patientId, doctorId } = req.body;
-
-    try {
-        const patient = await Patient.findOne({ patient_id: patientId });
-        const doctor = await Doctor.findOne({ doctor_id: doctorId });
-
-        if (!patient) {
-            return res.status(404).json({ message: 'Patient not found.' });
-        }
-        if (!doctor) {
-            return res.status(404).json({ message: 'Doctor not found.' });
-        }
-
-        const newAppointment = new Appointment({
-            patient_id: patient._id,
-            doctor_id: doctor._id,
-            appointment_date: new Date(),
-            appointment_time: 'Not Specified',
-            status: 'scheduled'
-        });
-
-        const savedAppointment = await newAppointment.save();
-
-        // ✅ Step 3: Update Admin's active_connections count
-        await Admin.updateOne({}, { $inc: { active_connections: 1 } });
-
-        res.status(201).json({
-            message: 'Connection created successfully.',
-            appointment: savedAppointment
-        });
-
-    } catch (error) {
-        console.error('Error creating connection:', error);
-        res.status(500).json({ message: 'Failed to create connection.' });
-    }
-});
-
 // View admin active connection count and name
 // Route to get active admin stats (active doctors, active patients, active connections)
 // Updated /api/admin/dashboard-stats endpoint
@@ -294,43 +256,6 @@ app.get('/api/admin/dashboard-stats', async (req, res) => {
 
 // Also update the /admin/connect endpoint to not increment the counter
 // since we're now counting active connections directly
-app.post('/admin/connect', async (req, res) => {
-    const { patientId, doctorId } = req.body;
-
-    try {
-        const patient = await Patient.findOne({ patient_id: patientId });
-        const doctor = await Doctor.findOne({ doctor_id: doctorId });
-
-        if (!patient) {
-            return res.status(404).json({ message: 'Patient not found.' });
-        }
-        if (!doctor) {
-            return res.status(404).json({ message: 'Doctor not found.' });
-        }
-
-        const newAppointment = new Appointment({
-            patient_id: patient._id,
-            doctor_id: doctor._id,
-            appointment_date: new Date(),
-            appointment_time: 'Not Specified',
-            status: 'scheduled'
-        });
-
-        const savedAppointment = await newAppointment.save();
-
-        // Remove the Admin.updateOne call that increments active_connections
-        // We're now counting active connections directly from appointments
-
-        res.status(201).json({
-            message: 'Connection created successfully.',
-            appointment: savedAppointment
-        });
-
-    } catch (error) {
-        console.error('Error creating connection:', error);
-        res.status(500).json({ message: 'Failed to create connection.' });
-    }
-});
 
 // Update the update-appointment-status endpoint to not manipulate the counter
 app.post('/admin/update-appointment-status', async (req, res) => {
@@ -372,12 +297,23 @@ app.get('/admin/stats', async (req, res) => {
 app.get('/admin/active-connections', async (req, res) => {
     try {
         const appointments = await Appointment.find({ status: 'scheduled' })
-            .populate({ path: 'patient_id', select: 'patient_id' })
-            .populate({ path: 'doctor_id', select: 'doctor_id' });
+            .populate({ 
+                path: 'patient_id', 
+                select: 'patient_id name' 
+            })
+            .populate({ 
+                path: 'doctor_id', 
+                select: 'doctor_id name' 
+            });
 
         const connections = appointments.map(app => ({
             patientId: app.patient_id.patient_id,
+            patientName: app.patient_id.name,
             doctorId: app.doctor_id.doctor_id,
+            doctorName: app.doctor_id.name,
+            date: app.appointment_date.toISOString().split('T')[0], // YYYY-MM-DD format
+            time: app.appointment_time,
+            reason: app.notes,
             status: app.status,
         }));
 
@@ -535,5 +471,91 @@ app.post('/admin/sync-connections', async (req, res) => {
         res.json({ message: 'Active connections synced successfully', count });
     } catch (error) {
         res.status(500).json({ message: 'Failed to sync active connections' });
+    }
+});
+
+// Updated admin/connect endpoint
+app.post('/admin/connect', async (req, res) => {
+    const { patientId, doctorId, appointmentDate, appointmentTime, notes } = req.body;
+    try {
+        const patient = await Patient.findOne({ patient_id: patientId });
+        const doctor = await Doctor.findOne({ doctor_id: doctorId });
+
+        if (!patient) {
+            return res.status(404).json({ message: 'Patient not found.' });
+        }
+        if (!doctor) {
+            return res.status(404).json({ message: 'Doctor not found.' });
+        }
+
+        // Format the date properly
+        let appDate;
+        try {
+            appDate = new Date(appointmentDate);
+            if (isNaN(appDate.getTime())) {
+                throw new Error('Invalid date');
+            }
+        } catch (error) {
+            return res.status(400).json({ message: 'Invalid appointment date format.' });
+        }
+
+        const newAppointment = new Appointment({
+            patient_id: patient._id,
+            doctor_id: doctor._id,
+            appointment_date: appDate,
+            appointment_time: appointmentTime || 'Not Specified',
+            notes: notes || 'General Consultation',
+            status: 'scheduled'
+        });
+
+        const savedAppointment = await newAppointment.save();
+
+        res.status(201).json({
+            message: 'Connection created successfully.',
+            appointment: savedAppointment
+        });
+
+    } catch (error) {
+        console.error('Error creating connection:', error);
+        res.status(500).json({ message: 'Failed to create connection.' });
+    }
+});
+
+
+// Update the endpoint for doctor's appointments to include new fields
+app.get('/api/doctor/:doctorId/appointments/today', async (req, res) => {
+    try {
+        const doctorId = req.params.doctorId;
+        
+        // Get today's date
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        // Find appointments for the doctor that are scheduled for today
+        const appointments = await Appointment.find({
+            doctor_id: doctorId,
+            appointment_date: { $gte: today, $lt: tomorrow },
+            status: 'scheduled'
+        }).populate('patient_id');
+        
+        const formattedAppointments = appointments.map(appointment => {
+            const patient = appointment.patient_id;
+            return {
+                name: patient.name,
+                date: appointment.appointment_date.toISOString().split('T')[0], // Consistent date format
+                time: appointment.appointment_time,
+                reason: appointment.notes || 'General Consultation',
+                status: appointment.status,
+                patientId: patient._id,
+                appointmentId: appointment._id
+            };
+        });
+        
+        res.json(formattedAppointments);
+    } catch (error) {
+        console.error('Error fetching appointments:', error);
+        res.status(500).json({ message: 'Failed to get appointments.' });
     }
 });

@@ -249,16 +249,25 @@ function Doctorpage() {
                 {appointments.length === 0 ? (
                   <p className="text-center text-gray-600 mt-10">No appointments scheduled for today.</p>
                 ) : (
+                  // In the appointments.map section of Doctorpage.jsx
+                  // In the appointments map:
                   appointments.map((appointment, idx) => (
-                    <button
-                      key={idx}
-                      className="border border-gray-300 rounded-xl p-4 mb-4 shadow-md bg-white hover:bg-gray-200 text-left w-full"
-                      onClick={() => handlePatientClick(appointment)}
-                    >
-                      <p className="text-lg font-semibold text-gray-800">Name: {appointment.name}</p>
-                      <p className="text-gray-700">Appointment Date: {appointment.date}</p>
-                      <p className="text-gray-700">Reason for Visit: {appointment.reason}</p>
-                    </button>
+                  <button
+                    key={idx}
+                    className="border border-gray-300 rounded-xl p-4 mb-4 shadow-md bg-white hover:bg-gray-200 text-left w-full"
+                    onClick={() => handlePatientClick(appointment)}
+                  >
+                  <p className="text-lg font-semibold text-gray-800">Name: {appointment.name}</p>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                  <div>
+                    <p className="text-gray-700"><strong>Date:</strong> {appointment.date}</p>
+                    <p className="text-gray-700"><strong>Time:</strong> {appointment.time}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-700"><strong>Reason:</strong> {appointment.reason}</p>
+                  </div>
+                  </div>
+                  </button>
                   ))
                 )}
               </div>
@@ -277,9 +286,15 @@ function Doctorpage() {
                       onClick={() => handlePatientClick(patient)}
                     >
                       <p className="text-lg font-semibold text-gray-800">Name: {patient.name}</p>
-                      <p className="text-gray-700">Age: {patient.age}</p>
-                      <p className="text-gray-700">Contact: {patient.contact}</p>
-                      <p className="text-gray-700">Condition: {patient.condition}</p>
+                      <div className="grid grid-cols-2 gap-2 mt-2">
+                        <div>
+                          <p className="text-gray-700"><strong>Age:</strong> {patient.age}</p>
+                          <p className="text-gray-700"><strong>Contact:</strong> {patient.contact}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-700"><strong>Condition:</strong> {patient.condition}</p>
+                        </div>
+                      </div>
                     </button>
                   ))
                 )}
@@ -291,12 +306,29 @@ function Doctorpage() {
       </div>
 
       {/* Modal */}
-      {showModal && (
+      {showModal && selectedPatient && (
         <div className="fixed inset-0 bg-gray-200 bg-opacity-80 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-150 h-150 p-6 relative">
+          <div className="bg-white rounded-lg shadow-xl w-150 h-150 p-6 relative max-w-4xl max-h-[90vh] overflow-y-auto">
             <button onClick={closeModal} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
               <MdClose className="text-2xl" />
             </button>
+            
+            {/* Patient Details */}
+            <h2 className="text-2xl font-bold text-black mb-4">Patient Details</h2>
+            <div className="bg-gray-100 p-4 rounded-lg mb-6">
+              <p className="text-xl font-semibold text-gray-800">{selectedPatient.name}</p>
+              <div className="grid grid-cols-2 gap-4 mt-2">
+                <div>
+                  <p className="text-gray-700"><strong>Date:</strong> {selectedPatient.date || "Not specified"}</p>
+                  <p className="text-gray-700"><strong>Time:</strong> {selectedPatient.time || "Not specified"}</p>
+                </div>
+                <div>
+                  <p className="text-gray-700"><strong>Reason:</strong> {selectedPatient.reason || "General Consultation"}</p>
+                  {selectedPatient.age && <p className="text-gray-700"><strong>Age:</strong> {selectedPatient.age}</p>}
+                  {selectedPatient.contact && <p className="text-gray-700"><strong>Contact:</strong> {selectedPatient.contact}</p>}
+                </div>
+              </div>
+            </div>
 
             {/* Status */}
             <h2 className="text-2xl font-bold text-black mt-4">Status of the Appointment</h2>
@@ -311,10 +343,9 @@ function Doctorpage() {
                 className={`w-60 p-4 border-2 ${appointmentStatus === 'cancelled' ? 'border-red-500 bg-red-100' : 'border-gray-300'} rounded-lg`}
                 onClick={() => handleStatusChange('cancelled')}
               >
-              Cancelled
+                Cancelled
               </button>
             </div>
-
 
             {/* Medical Record Description */}
             <h2 className="text-2xl font-bold text-black mt-8">

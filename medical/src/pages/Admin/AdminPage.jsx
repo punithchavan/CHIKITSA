@@ -12,12 +12,22 @@ function Adminpage() {
     });
     const [patientIdInput, setPatientIdInput] = useState("");
     const [doctorIdInput, setDoctorIdInput] = useState("");
+    const [appointmentDate, setAppointmentDate] = useState("");
+    const [appointmentTime, setAppointmentTime] = useState("");
+    const [appointmentReason, setAppointmentReason] = useState("");
     const [activeConnections, setActiveConnections] = useState([]);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [isLoading, setIsLoading] = useState(true);
     const [isFetchingStats, setIsFetchingStats] = useState(false);
     const [isFetchingConnections, setIsFetchingConnections] = useState(false);
+
+    // Set default date to today
+    useEffect(() => {
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+        setAppointmentDate(formattedDate);
+    }, []);
 
     // Fetch all data when component mounts
     useEffect(() => {
@@ -124,7 +134,6 @@ function Adminpage() {
         // Clear previous messages
         setError("");
         setSuccess("");
-        
         // Input validation
         if (!patientIdInput.trim()) {
             setError("Patient ID is required");
@@ -136,8 +145,19 @@ function Adminpage() {
             return;
         }
         
+        if (!appointmentDate) {
+            setError("Appointment date is required");
+            return;
+        }
+        
+        if (!appointmentTime) {
+            setError("Appointment time is required");
+            return;
+        }
+        
         try {
             console.log("Connecting patient and doctor...");
+            
             const response = await fetch('http://localhost:5000/admin/connect', {
                 method: 'POST',
                 headers: {
@@ -145,7 +165,10 @@ function Adminpage() {
                 },
                 body: JSON.stringify({ 
                     patientId: patientIdInput, 
-                    doctorId: doctorIdInput 
+                    doctorId: doctorIdInput,
+                    appointmentDate: appointmentDate,
+                    appointmentTime: appointmentTime,
+                    notes: appointmentReason 
                 }),
             });
 
@@ -167,8 +190,11 @@ function Adminpage() {
                         console.error("Error refreshing data:", error);
                     }
                     
-                    setPatientIdInput(""); // Clear input fields
+                    // Clear input fields
+                    setPatientIdInput("");
                     setDoctorIdInput("");
+                    setAppointmentReason("");
+                    // Don't clear date and time for convenience
                 }, 500);
             } else {
                 const errorData = await response.json();
@@ -181,7 +207,7 @@ function Adminpage() {
         }
     };
 
-    // Sync admin counter with actual connection count (optional feature)
+    // Sync admin counter with actual connection count
     const syncConnectionCount = async () => {
         try {
             const response = await fetch('http://localhost:5000/admin/sync-connections', {
@@ -281,29 +307,70 @@ function Adminpage() {
 
                     <div className="flex flex-col gap-10 w-full max-w-4xl">
                         {/* Create New Connection Box */}
-                        <div className="flex flex-col md:flex-row items-center justify-between bg-white p-6 rounded-xl shadow-lg w-full space-y-4 md:space-y-0">
-                            <div className="flex flex-col md:flex-row gap-4 w-full">
+                        <div className="flex flex-col bg-white p-6 rounded-xl shadow-lg w-full space-y-4">
+                            <div className="flex flex-col md:flex-row md:items-center gap-4 w-full mb-4">
+                                <div className="w-full md:w-1/2">
+                                    <label className="block text-gray-700 text-sm font-bold mb-2">Patient ID</label>
+                                    <input
+                                        type="text"
+                                        placeholder="PATxxx"
+                                        className="bg-[#f0f0f0] px-6 py-3 rounded-full border border-gray-400 text-gray-700 font-medium w-full shadow-inner"
+                                        value={patientIdInput}
+                                        onChange={(e) => setPatientIdInput(e.target.value.toUpperCase())}
+                                    />
+                                </div>
+                                <div className="w-full md:w-1/2">
+                                    <label className="block text-gray-700 text-sm font-bold mb-2">Doctor ID</label>
+                                    <input
+                                        type="text"
+                                        placeholder="DOCxxx"
+                                        className="bg-[#f0f0f0] px-6 py-3 rounded-full border border-gray-400 text-gray-700 font-medium w-full shadow-inner"
+                                        value={doctorIdInput}
+                                        onChange={(e) => setDoctorIdInput(e.target.value.toUpperCase())}
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="flex flex-col md:flex-row md:items-center gap-4 w-full mb-4">
+                                <div className="w-full md:w-1/2">
+                                    <label className="block text-gray-700 text-sm font-bold mb-2">Appointment Date</label>
+                                    <input
+                                        type="date"
+                                        className="bg-[#f0f0f0] px-6 py-3 rounded-full border border-gray-400 text-gray-700 font-medium w-full shadow-inner"
+                                        value={appointmentDate}
+                                        onChange={(e) => setAppointmentDate(e.target.value)}
+                                    />
+                                </div>
+                                <div className="w-full md:w-1/2">
+                                    <label className="block text-gray-700 text-sm font-bold mb-2">Appointment Time</label>
+                                    <input
+                                        type="time"
+                                        className="bg-[#f0f0f0] px-6 py-3 rounded-full border border-gray-400 text-gray-700 font-medium w-full shadow-inner"
+                                        value={appointmentTime}
+                                        onChange={(e) => setAppointmentTime(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="w-full mb-4">
+                                <label className="block text-gray-700 text-sm font-bold mb-2">Reason for Appointment</label>
                                 <input
                                     type="text"
-                                    placeholder="PATxxx"
-                                    className="bg-[#f0f0f0] px-6 py-3 rounded-full border border-gray-400 text-gray-700 font-medium w-full md:w-40 shadow-inner"
-                                    value={patientIdInput}
-                                    onChange={(e) => setPatientIdInput(e.target.value.toUpperCase())}
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="DOCxxx"
-                                    className="bg-[#f0f0f0] px-6 py-3 rounded-full border border-gray-400 text-gray-700 font-medium w-full md:w-40 shadow-inner"
-                                    value={doctorIdInput}
-                                    onChange={(e) => setDoctorIdInput(e.target.value.toUpperCase())}
+                                    placeholder="Reason for appointment"
+                                    className="bg-[#f0f0f0] px-6 py-3 rounded-full border border-gray-400 text-gray-700 font-medium w-full shadow-inner"
+                                    value={appointmentReason}
+                                    onChange={(e) => setAppointmentReason(e.target.value)}
                                 />
                             </div>
-                            <button
-                                className="bg-[#333333] hover:bg-[#444444] text-white px-8 py-3 rounded-full font-semibold transition w-full md:w-auto shadow-md"
-                                onClick={handleConnect}
-                            >
-                                Connect
-                            </button>
+                            
+                            <div className="flex justify-center mt-4">
+                                <button
+                                    className="bg-[#333333] hover:bg-[#444444] text-white px-8 py-3 rounded-full font-semibold transition shadow-md"
+                                    onClick={handleConnect}
+                                >
+                                    Connect
+                                </button>
+                            </div>
                         </div>
 
                         {/* Error/Success Messages */}
@@ -334,28 +401,32 @@ function Adminpage() {
                                     {!isFetchingConnections && <MdRefresh className="ml-1" />}
                                 </button>
                             </div>
-                            <div className="w-full">
+                            <div className="w-full overflow-x-auto">
                                 <div className="flex font-semibold text-gray-700 border-b pb-2 text-center">
-                                    <div className="w-1/3">Patient ID</div>
-                                    <div className="w-1/3">Doctor ID</div>
-                                    <div className="w-1/3">Status</div>
+                                    <div className="w-1/6">Patient ID</div>
+                                    <div className="w-1/6">Doctor ID</div>
+                                    <div className="w-1/6">Date</div>
+                                    <div className="w-1/6">Time</div>
+                                    <div className="w-1/6">Reason</div>
+                                    <div className="w-1/6">Status</div>
                                 </div>
                                 {isLoading || isFetchingConnections ? (
                                     <div className="text-center py-4 text-gray-500">Loading connections...</div>
                                 ) : activeConnections.length > 0 ? (
                                     activeConnections.map((connection, index) => (
-                                        <div key={`${connection.patientId}-${connection.doctorId}-${index}`} className="flex text-gray-600 mt-4 text-center">
-                                            <div className="w-1/3">{connection.patientId}</div>
-                                            <div className="w-1/3">{connection.doctorId}</div>
-                                            <div className="w-1/3 text-green-600 font-semibold">
+                                        <div key={index} className="flex text-gray-600 mt-4 text-center">
+                                            <div className="w-1/6">{connection.patientId}</div>
+                                            <div className="w-1/6">{connection.doctorId}</div>
+                                            <div className="w-1/6">{connection.date || "N/A"}</div>
+                                            <div className="w-1/6">{connection.time || "N/A"}</div>
+                                            <div className="w-1/6">{connection.reason || "N/A"}</div>
+                                            <div className="w-1/6 text-green-600 font-semibold">
                                                 {connection.status}
                                             </div>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="flex text-gray-600 mt-4 text-center">
-                                        <div className="w-full">No active connections found.</div>
-                                    </div>
+                                    <div className="text-center py-4 text-gray-500">No active connections found</div>
                                 )}
                             </div>
                         </div>
