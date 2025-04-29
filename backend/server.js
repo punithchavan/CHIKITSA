@@ -379,7 +379,8 @@ app.get('/api/doctor/:username', async (req, res) => {
 app.get('/api/doctor/:doctorId/appointments/today', async (req, res) => {
     try {
         const doctorId = req.params.doctorId;
-        
+        const startTime = "00:00";
+        const endTime = "23:59";
         // Get today's date
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -390,14 +391,17 @@ app.get('/api/doctor/:doctorId/appointments/today', async (req, res) => {
         const appointments = await Appointment.find({
             doctor_id: doctorId,
             appointment_date: { $gte: today, $lt: tomorrow },
+            appointment_time:{ $gte: startTime, $lt: endTime },
             status: 'scheduled'
-        }).populate('patient_id');
+        }).populate('patient_id')
+        .sort({ appointment_time: 1 }); 
         
         const formattedAppointments = appointments.map(appointment => {
             const patient = appointment.patient_id;
             return {
                 name: patient.name,
                 date: appointment.appointment_date.toLocaleDateString('en-IN'),
+                time:appointment.appointment_time,
                 reason: appointment.notes || 'General Consultation',
                 patientId: patient._id,
                 appointmentId: appointment._id

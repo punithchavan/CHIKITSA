@@ -260,11 +260,12 @@ function Doctorpage() {
                   <p className="text-lg font-semibold text-gray-800">Name: {appointment.name}</p>
                   <div className="grid grid-cols-2 gap-2 mt-2">
                   <div>
-                    <p className="text-gray-700"><strong>Date:</strong> {appointment.date}</p>
-                    <p className="text-gray-700"><strong>Time:</strong> {appointment.time}</p>
-                  </div>
-                  <div>
                     <p className="text-gray-700"><strong>Reason:</strong> {appointment.reason}</p>
+                  </div>
+                  
+                  <div>
+                  <p className="text-gray-700"><strong>Date:</strong> {appointment.date}</p>
+                  <p className="text-gray-700"><strong>Time:</strong> {appointment.time}</p>
                   </div>
                   </div>
                   </button>
