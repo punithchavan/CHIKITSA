@@ -563,3 +563,130 @@ app.get('/api/doctor/:doctorId/appointments/today', async (req, res) => {
         res.status(500).json({ message: 'Failed to get appointments.' });
     }
 });
+
+// Add these endpoints to your server.js file
+
+// Get patient details by username
+app.get('/api/patient/:username', async (req, res) => {
+    try {
+      const username = req.params.username;
+      
+      // First, find the user with the patient role
+      const user = await User.findOne({ username, role: 'Patient' });
+      if (!user) {
+        return res.status(404).json({ message: 'Patient user not found.' });
+      }
+      
+      // Then find the patient profile
+      const patient = await Patient.findOne({ username });
+      if (!patient) {
+        return res.status(404).json({ message: 'Patient profile not found.' });
+      }
+      
+      res.json(patient);
+    } catch (error) {
+      console.error('Error fetching patient details:', error);
+      res.status(500).json({ message: 'Failed to get patient details.' });
+    }
+  });
+  
+  // Get patient's appointments
+  app.get('/api/patient/:patientId/appointments', async (req, res) => {
+    try {
+      const patientId = req.params.patientId;
+      
+      // Find all appointments for this patient that are scheduled
+      const appointments = await Appointment.find({
+        patient_id: patientId,
+        appointment_date: { $gte: new Date() } // Only get future appointments
+      }).populate('doctor_id');
+      
+      // Format appointments for the frontend
+      const formattedAppointments = await Promise.all(appointments.map(async (appointment) => {
+        const doctor = appointment.doctor_id;
+        
+        return {
+          appointmentId: appointment._id,
+          date: appointment.appointment_date.toISOString().split('T')[0], // YYYY-MM-DD format
+          time: appointment.appointment_time,
+          doctorName: doctor.name,
+          doctorId: doctor._id,
+          reason: appointment.notes || 'General Consultation',
+          status: appointment.status
+        };
+      }));
+      
+      // Sort by date and time
+      const sortedAppointments = formattedAppointments.sort((a, b) => {
+        const dateA = new Date(`${a.date} ${a.time}`);
+        const dateB = new Date(`${b.date} ${b.time}`);
+        return dateA - dateB;
+      });
+      
+      res.json(sortedAppointments);
+    } catch (error) {
+      console.error('Error fetching patient appointments:', error);
+      res.status(500).json({ message: 'Failed to get patient appointments.' });
+    }
+  });
+  
+  // Get patient's medical records
+  app.get('/api/patient/:patientId/medical-records', async (req, res) => {
+    try {
+      const patientId = req.params.patientId;
+      
+      // Find all medical records for this patient
+      const records = await MedicalRecord.find({
+        patient_id: patientId
+      }).populate('doctor_id');
+      
+      // Format records for the frontend
+      const formattedRecords = records.map(record => {
+        const doctor = record.doctor_id;
+        
+        return {
+          recordId: record._id,
+          date: record.createdAt || new Date(),
+          description: record.description,
+          doctorName: doctor ? doctor.name : 'Unknown Doctor',
+          doctorId: doctor ? doctor._id : null,
+          pdf: record.pdf // Path to the PDF file
+        };
+      });
+      
+      // Sort by date (newest first)
+      const sortedRecords = formattedRecords.sort((a, b) => {
+        return new Date(b.date) - new Date(a.date);
+      });
+      
+      res.json(sortedRecords);
+    } catch (error) {
+      console.error('Error fetching patient medical records:', error);
+      res.status(500).json({ message: 'Failed to get patient medical records.' });
+    }
+  });
+  
+  // Add a route to handle appointment cancellation
+  app.post('/api/appointment/:appointmentId/cancel', async (req, res) => {
+    try {
+      const appointmentId = req.params.appointmentId;
+      
+      const appointment = await Appointment.findByIdAndUpdate(
+        appointmentId,
+        { status: 'cancelled' },
+        { new: true }
+      );
+      
+      if (!appointment) {
+        return res.status(404).json({ message: 'Appointment not found.' });
+      }
+      
+      res.json({ 
+        message: 'Appointment cancelled successfully',
+        appointment 
+      });
+    } catch (error) {
+      console.error('Error cancelling appointment:', error);
+      res.status(500).json({ message: 'Failed to cancel appointment.' });
+    }
+  });
