@@ -51,7 +51,7 @@ const HomeView = ({ patientDetails, appointments, medicalRecords, cancelAppointm
   const [healthTips, setHealthTips] = useState(getRandomHealthTips());
   const [showMoreAppointments, setShowMoreAppointments] = useState(false);
   
-  // Get the next upcoming appointment
+  // Get the next upcoming appointment - already sorted from the backend
   const nextAppointment = appointments && appointments.length > 0 ? appointments[0] : null;
 
   // Function to format date to a more readable format
@@ -251,17 +251,8 @@ const PatientPage = () => {
   // Get username from localStorage
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
+  const username = user?.username;
   
-  if (!user?.username) {
-    setError("No user data found. Please log in again.");
-    setLoading(false);
-    return;
-  }
-  
-  const username = user.username;
-  
-  console.log("Current username from localStorage:", username);
-
   useEffect(() => {
     // Function to fetch patient data
     const fetchPatientData = async () => {
@@ -286,18 +277,13 @@ const PatientPage = () => {
           const patientId = patientResponse.data._id;
           
           try {
-            // Fetch appointments
+            // Fetch appointments - already sorted by date and time from backend
             const appointmentsResponse = await axios.get(`http://localhost:5000/api/patient/${patientId}/appointments`);
             console.log("Appointments received:", appointmentsResponse.data);
             
-            // Sort appointments by date and time
-            const sortedAppointments = appointmentsResponse.data.sort((a, b) => {
-              const dateA = new Date(`${a.date} ${a.time}`);
-              const dateB = new Date(`${b.date} ${b.time}`);
-              return dateA - dateB;
-            });
-            
-            const scheduledAppointments = sortedAppointments.filter(app => app.status === 'scheduled');
+            // No need to sort appointments here as they're already sorted by the backend
+            // Just filter by scheduled status if needed
+            const scheduledAppointments = appointmentsResponse.data.filter(app => app.status === 'scheduled');
             setAppointments(scheduledAppointments);
 
           } catch (appointmentsErr) {
@@ -333,12 +319,7 @@ const PatientPage = () => {
       const response = await axios.post(`http://localhost:5000/api/appointment/${appointmentId}/cancel`);
       
       if (response.status === 200) {
-        // Update appointments list
-        setAppointments(appointments.map(app => 
-          app.appointmentId === appointmentId ? { ...app, status: 'cancelled' } : app
-        ));
-        
-        // Remove cancelled appointments from the display
+        // Remove cancelled appointment from the display
         setAppointments(appointments.filter(app => app.appointmentId !== appointmentId));
         
         alert("Appointment cancelled successfully");
@@ -348,6 +329,24 @@ const PatientPage = () => {
       alert("Failed to cancel appointment. Please try again.");
     }
   };
+
+  // If there's no username in localStorage, show an error
+  if (!username && !loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#f0f0f0] items-center justify-center">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-8 py-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-bold mb-2">Authentication Error</h2>
+          <p>No user data found. Please log in again.</p>
+          <button 
+            onClick={() => window.location.href = '/login'}
+            className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f0f0f0] overflow-hidden">

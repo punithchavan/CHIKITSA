@@ -588,47 +588,114 @@ app.get('/api/patient/:username', async (req, res) => {
       console.error('Error fetching patient details:', error);
       res.status(500).json({ message: 'Failed to get patient details.' });
     }
-  });
+});
   
-  // Get patient's appointments
-  app.get('/api/patient/:patientId/appointments', async (req, res) => {
+// Get patient's appointments with proper sorting by datetime
+app.get('/api/patient/:patientId/appointments', async (req, res) => {
     try {
       const patientId = req.params.patientId;
-      
-      // Find all appointments for this patient that are scheduled
+      const now = new Date(); // Local current datetime
+  
       const appointments = await Appointment.find({
         patient_id: patientId,
-        appointment_date: { $gte: new Date() } // Only get future appointments
+        status: 'scheduled'
       }).populate('doctor_id');
-      
-      // Format appointments for the frontend
-      const formattedAppointments = await Promise.all(appointments.map(async (appointment) => {
-        const doctor = appointment.doctor_id;
-        
-        return {
-          appointmentId: appointment._id,
-          date: appointment.appointment_date.toISOString().split('T')[0], // YYYY-MM-DD format
-          time: appointment.appointment_time,
-          doctorName: doctor.name,
-          doctorId: doctor._id,
-          reason: appointment.notes || 'General Consultation',
-          status: appointment.status
-        };
-      }));
-      
-      // Sort by date and time
-      const sortedAppointments = formattedAppointments.sort((a, b) => {
-        const dateA = new Date(`${a.date} ${a.time}`);
-        const dateB = new Date(`${b.date} ${b.time}`);
-        return dateA - dateB;
-      });
-      
-      res.json(sortedAppointments);
+  
+      const formattedAppointments = await Promise.all(
+        appointments
+          .filter(appointment => {
+            let appointmentDate;
+            // Support both Date object and string format
+            if (typeof appointment.appointment_date === 'string') {
+              const [year, month, day] = appointment.appointment_date.split('-').map(Number);
+              appointmentDate = new Date(year, month - 1, day);
+            } else {
+              appointmentDate = new Date(appointment.appointment_date);
+            }
+  
+            const [hours, minutes] = appointment.appointment_time.split(':').map(Number);
+  
+            const appointmentDateTime = new Date(
+              appointmentDate.getFullYear(),
+              appointmentDate.getMonth(),
+              appointmentDate.getDate(),
+              hours,
+              minutes
+            );
+  
+            return appointmentDateTime >= now;
+          })
+          .map(async appointment => {
+            const doctor = appointment.doctor_id;
+  
+            let appointmentDate;
+            if (typeof appointment.appointment_date === 'string') {
+              const [year, month, day] = appointment.appointment_date.split('-').map(Number);
+              appointmentDate = new Date(year, month - 1, day);
+            } else {
+              appointmentDate = new Date(appointment.appointment_date);
+            }
+  
+            const [hours, minutes] = appointment.appointment_time.split(':').map(Number);
+  
+            const fullDateTime = new Date(
+              appointmentDate.getFullYear(),
+              appointmentDate.getMonth(),
+              appointmentDate.getDate(),
+              hours,
+              minutes
+            );
+  
+            return {
+              appointmentId: appointment._id,
+              date: appointment.appointment_date instanceof Date
+                ? appointment.appointment_date.toISOString().split('T')[0]
+                : appointment.appointment_date,
+              time: appointment.appointment_time,
+              doctorName: doctor.name,
+              doctorId: doctor._id,
+              reason: appointment.notes || 'General Consultation',
+              status: appointment.status,
+              fullDateTime: fullDateTime.toISOString()
+            };
+          })
+      );
+  
+      // Sort by datetime
+      formattedAppointments.sort((a, b) => new Date(a.fullDateTime) - new Date(b.fullDateTime));
+  
+      const cleanedAppointments = formattedAppointments.map(({ fullDateTime, ...rest }) => rest);
+  
+      res.json(cleanedAppointments);
     } catch (error) {
       console.error('Error fetching patient appointments:', error);
       res.status(500).json({ message: 'Failed to get patient appointments.' });
     }
   });
+  
+  
+  
+
+// Endpoint to cancel appointment
+app.post('/api/appointment/:appointmentId/cancel', async (req, res) => {
+  try {
+    const appointmentId = req.params.appointmentId;
+    
+    const appointment = await Appointment.findById(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+    
+    appointment.status = 'cancelled';
+    await appointment.save();
+    
+    res.json({ message: 'Appointment cancelled successfully.', appointment });
+  } catch (error) {
+    console.error('Error cancelling appointment:', error);
+    res.status(500).json({ message: 'Failed to cancel appointment.' });
+  }
+});
+  
   
   // Get patient's medical records
   app.get('/api/patient/:patientId/medical-records', async (req, res) => {

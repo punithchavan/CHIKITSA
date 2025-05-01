@@ -257,17 +257,18 @@ function Doctorpage() {
                     className="border border-gray-300 rounded-xl p-4 mb-4 shadow-md bg-white hover:bg-gray-200 text-left w-full"
                     onClick={() => handlePatientClick(appointment)}
                   >
-                  <p className="text-lg font-semibold text-gray-800">Name: {appointment.name}</p>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                  <div>
-                    <p className="text-gray-700"><strong>Reason:</strong> {appointment.reason}</p>
-                  </div>
-                  
-                  <div>
+                <div className="flex justify-between items-start">
+                  <p className="text-lg font-semibold text-gray-800">
+                    Name: {appointment.name}
+                  </p>
+                <div className="text-right">
                   <p className="text-gray-700"><strong>Date:</strong> {appointment.date}</p>
                   <p className="text-gray-700"><strong>Time:</strong> {appointment.time}</p>
-                  </div>
-                  </div>
+                </div>
+              </div>
+              <div className="mt-2">
+                <p className="text-gray-700"><strong>Reason:</strong> {appointment.reason}</p>
+              </div>
                   </button>
                   ))
                 )}
@@ -314,22 +315,23 @@ function Doctorpage() {
               <MdClose className="text-2xl" />
             </button>
             
-            {/* Patient Details */}
-            <h2 className="text-2xl font-bold text-black mb-4">Patient Details</h2>
-            <div className="bg-gray-100 p-4 rounded-lg mb-6">
-              <p className="text-xl font-semibold text-gray-800">{selectedPatient.name}</p>
-              <div className="grid grid-cols-2 gap-4 mt-2">
-                <div>
-                  <p className="text-gray-700"><strong>Date:</strong> {selectedPatient.date || "Not specified"}</p>
-                  <p className="text-gray-700"><strong>Time:</strong> {selectedPatient.time || "Not specified"}</p>
-                </div>
-                <div>
-                  <p className="text-gray-700"><strong>Reason:</strong> {selectedPatient.reason || "General Consultation"}</p>
-                  {selectedPatient.age && <p className="text-gray-700"><strong>Age:</strong> {selectedPatient.age}</p>}
-                  {selectedPatient.contact && <p className="text-gray-700"><strong>Contact:</strong> {selectedPatient.contact}</p>}
-                </div>
-              </div>
-            </div>
+                  {/* Patient Details */}
+                  <h2 className="text-2xl font-bold text-black mb-4">Patient Details</h2>
+                  <div className="bg-gray-100 p-4 rounded-lg mb-6 relative">
+                    <p className="text-xl font-semibold text-gray-800">{selectedPatient.name}</p>
+                    <p className="text-gray-700 mt-1"><strong>Reason:</strong> {selectedPatient.reason || "General Consultation"}</p>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                      <div>
+                        {selectedPatient.age && <p className="text-gray-700"><strong>Age:</strong> {selectedPatient.age}</p>}
+                        {selectedPatient.contact && <p className="text-gray-700"><strong>Contact:</strong> {selectedPatient.contact}</p>}
+                      </div>
+                    </div>
+                    <div className="absolute top-4 right-4 text-gray-700">
+                      <p><strong>Date:</strong> {selectedPatient.date || "Not specified"}</p>
+                      <p><strong>Time:</strong> {selectedPatient.time || "Not specified"}</p>
+                    </div>
+                  </div>
+
 
             {/* Status */}
             <h2 className="text-2xl font-bold text-black mt-4">Status of the Appointment</h2>
