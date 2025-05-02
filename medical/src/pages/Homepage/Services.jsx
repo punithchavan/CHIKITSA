@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Service1 from "../../assets/Services1.jpg"
 import Service2 from "../../assets/Services2.jpg"
 import Service3 from "../../assets/Services3.jpg"
+import logo from "../../assets/logo.png";
 const Services = () => {
     const navigate = useNavigate();
   return (
@@ -10,7 +11,7 @@ const Services = () => {
       {/* Navbar */}
       <nav className="bg-white shadow-md p-4 flex justify-between items-center">
         <div className="text-2xl font-bold flex items-center">
-          <span className="mr-2">🩺</span> CHIKITSA
+          <span className="mr-2"><img src={logo} alt="logo" className="h-10 w-auto" /></span> CHIKITSA
         </div>
         <div className="space-x-6">
           <a href="/Home" className="text-gray-700 font-medium hover:text-black">Home</a>

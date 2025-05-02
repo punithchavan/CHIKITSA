@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { MdSettings, MdRefresh, MdError } from "react-icons/md";
+import { MdLogout } from "react-icons/md";
 import logo from "../../assets/logo.png";
-import patientai from "../../assets/patientAi.png";
+import patientai from "../../assets/admin.webp";
 
 function Adminpage() {
     const [adminDetails, setAdminDetails] = useState(null);
@@ -242,6 +243,12 @@ function Adminpage() {
         return num ? num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "0";
     };
 
+    const handleLogout = () => {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        window.location.href = '/';
+      };
+
     return (
         <div className="min-h-screen flex flex-col bg-[#f0f0f0]">
             {/* Top Bar */}
@@ -252,7 +259,15 @@ function Adminpage() {
                         CHIKITSA
                     </div>
                 </div>
-                <MdSettings className="text-3xl cursor-pointer text-gray-700 hover:text-gray-900 transition" />
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
+                  >
+                    <MdLogout className="text-xl" />
+                    <span>Logout</span>
+                  </button>
+                </div>
             </div>
 
             {/* Body */}

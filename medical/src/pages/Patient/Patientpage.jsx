@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { MdSettings } from "react-icons/md";
+import { MdSettings, MdLogout } from "react-icons/md";
 import logo from "../../assets/logo.png";
 import patientai from "../../assets/patient.webp";
 import axios from "axios";
@@ -253,6 +253,15 @@ const PatientPage = () => {
   const user = storedUser ? JSON.parse(storedUser) : null;
   const username = user?.username;
   
+  // Handle logout
+  const handleLogout = () => {
+    // Clear user data from localStorage
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    // Redirect to login page
+    window.location.href = '/';
+  };
+  
   useEffect(() => {
     // Function to fetch patient data
     const fetchPatientData = async () => {
@@ -358,7 +367,14 @@ const PatientPage = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <MdSettings className="text-3xl cursor-pointer text-gray-700 hover:text-gray-900 transition" />
+          {/* Logout Button */}
+          <button 
+            onClick={handleLogout}
+            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
+          >
+            <MdLogout className="text-xl" />
+            <span>Logout</span>
+          </button>
         </div>
       </div>
 
@@ -391,6 +407,9 @@ const PatientPage = () => {
               </p>
               <p>
                 <strong>Contact:</strong> {patientDetails.contact_info || "Not provided"}
+              </p>
+              <p>
+                <strong>Patient ID:</strong> {patientDetails.patient_id || "Not provided"}
               </p>
             </div>
           ) : (

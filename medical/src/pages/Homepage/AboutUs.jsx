@@ -1,7 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import au1 from "../../assets/AU1.jpg";
-import au2 from "../../assets/AU2.jpg"
+import au2 from "../../assets/AU2.jpg";
+import logo from "../../assets/logo.png";
 const AboutUs = () => {
     const navigate = useNavigate();
   return (
@@ -9,7 +10,7 @@ const AboutUs = () => {
       {/* Navbar */}
       <nav className="bg-white shadow-md p-4 flex justify-between items-center">
         <div className="text-2xl font-bold flex items-center">
-          <span className="mr-2">🩺</span> CHIKITSA
+          <span className="mr-2"><img src={logo} alt="logo" className="h-10 w-auto" /></span> CHIKITSA
         </div>
         <div className="space-x-6">
           <a href="/Home" className="text-gray-700 font-medium hover:text-black">Home</a>
