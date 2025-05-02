@@ -39,13 +39,13 @@ const Home = () => {
 
       {/* Call to Action */}
       <div className="text-center p-6 md:p-10">
-        <h2 className="text-2xl md:text-3xl font-semibold">Ready to Get Started?</h2>
+        <h2 className="text-2xl md:text-3xl font-semibold mt-25">Ready to Get Started?</h2>
         <p className="text-gray-600 mt-2 text-sm md:text-base">Join thousands of patients who trust MedEncrypt for their medical record management.</p>
       </div>
 
       {/* Footer */}
-      <footer className="bg-black text-white p-6 md:p-8">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left">
+      <footer className="bg-black text-white p-6 md:p-8 mt-25">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left ">
           <div>
             <h3 className="font-bold">Quick Links</h3>
             <ul className="mt-2 space-y-1">

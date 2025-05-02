@@ -24,14 +24,14 @@ const AboutUs = () => {
       </nav>
 
       {/* Main Content */}
-      <div className="max-w-5xl mx-auto p-10">
+      <div className="max-w-5xl mx-auto p-10 mt-10">
         <h1 className="text-3xl font-bold">Empowering Secure and Seamless Healthcare Data Management</h1>
         <p className="text-gray-600 mt-4">
           At Chikitsa, we believe that health data should be secure, accessible, and efficient.
           Our mission is to revolutionize medical record management by providing an encrypted,
           centralized, and user-friendly platform for patients, doctors, and administrators.
         </p>
-    <div class="flex items-center space-x-4">
+    <div class="flex items-center space-x-4 mt-15">
       <div>
         <h2 className="text-2xl font-bold mt-8">Our Vision</h2>
         <p className="text-gray-600 mt-2">
@@ -50,7 +50,7 @@ const AboutUs = () => {
       </div>
 
       {/* Footer */}
-      <footer className="bg-black text-white p-8">
+      <footer className="bg-black text-white p-8 mt-25">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <h3 className="font-bold">Quick Links</h3>
