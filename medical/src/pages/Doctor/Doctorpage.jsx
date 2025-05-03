@@ -63,9 +63,9 @@ function Doctorpage() {
       // Find patient by name to get their patient_id
       const patientResponse = await axios.get(`http://localhost:5000/api/patient/by-name/${patientName}`);
       
-      if (patientResponse.data && patientResponse.data.patient_id) {
+      if (patientResponse.data && patientResponse.data._id) {
         const medicalRecordResponse = await axios.get(
-          `http://localhost:5000/api/medical-record/${patientResponse.data.patient_id}/${doctorDetails._id}`
+          `http://localhost:5000/api/medical-record/${patientResponse.data._id}/${doctorDetails._id}`
         );
         
         if (medicalRecordResponse.data) {
@@ -81,51 +81,52 @@ function Doctorpage() {
     }
   };
 
-  const handleMedicalRecordSubmit = async () => {
-    if (!selectedPatient) return;
-    
-    try {
-      // Find patient by name
-      const patientResponse = await axios.get(`http://localhost:5000/api/patient/by-name/${selectedPatient.name}`);
-      if (!patientResponse.data) {
-        alert("Patient not found.");
-        return;
-      }
-
-      const patientId = patientResponse.data.patient_id;
-      const doctorId = doctorDetails._id;
-
-      const formData = new FormData();
-      if (selectedFile) {
-        formData.append('file', selectedFile);
-      }
-      formData.append('patientId', patientId);
-      formData.append('doctorId', doctorId);
-      formData.append('description', description);
-      
-      // If we have an existing record, update it
-      if (existingMedicalRecord) {
-        formData.append('recordId', existingMedicalRecord._id);
-        await axios.put('http://localhost:5000/api/update-medical-record', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        alert("Medical record updated successfully");
-      } else {
-        // Otherwise create a new one
-        await axios.post('http://localhost:5000/api/create-medical-record', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        alert("Medical record created successfully");
-      }
-      
-      setShowModal(false);
-      setSelectedFile(null);
-      setDescription("");
-      setExistingMedicalRecord(null);
-    } catch (error) {
-      alert(`Failed to ${existingMedicalRecord ? 'update' : 'create'} medical record: ${error.message}`);
+  // 2. Update handleMedicalRecordSubmit function
+const handleMedicalRecordSubmit = async () => {
+  if (!selectedPatient) return;
+  
+  try {
+    // Find patient by name
+    const patientResponse = await axios.get(`http://localhost:5000/api/patient/by-name/${selectedPatient.name}`);
+    if (!patientResponse.data) {
+      alert("Patient not found.");
+      return;
     }
-  };
+
+    const patientId = patientResponse.data._id;
+    const doctorId = doctorDetails._id;
+
+    const formData = new FormData();
+    if (selectedFile) {
+      formData.append('file', selectedFile);
+    }
+    formData.append('patientId', patientId);
+    formData.append('doctorId', doctorId);
+    formData.append('description', description);
+    
+    // If we have an existing record, update it
+    if (existingMedicalRecord) {
+      formData.append('recordId', existingMedicalRecord._id);
+      await axios.put('http://localhost:5000/api/update-medical-record', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      alert("Medical record updated successfully");
+    } else {
+      // Otherwise create a new one
+      await axios.post('http://localhost:5000/api/create-medical-record', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      alert("Medical record created successfully");
+    }
+    
+    setShowModal(false);
+    setSelectedFile(null);
+    setDescription("");
+    setExistingMedicalRecord(null);
+  } catch (error) {
+    alert(`Failed to ${existingMedicalRecord ? 'update' : 'create'} medical record: ${error.message}`);
+  }
+};
 
   const handleStatusChange = async (status) => {
     if (!selectedPatient || !selectedPatient.appointmentId) return;
@@ -394,17 +395,17 @@ function Doctorpage() {
                 </button>
               </div>
               {existingMedicalRecord && existingMedicalRecord.pdf && (
-                <div className="mt-4">
-                  <a 
-                    href={`http://localhost:5000/${existingMedicalRecord.pdf}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 underline"
-                  >
-                    View Existing Document
-                  </a>
-                </div>
-              )}
+  <div className="mt-4">
+          <a 
+            href={`http://localhost:5000/${existingMedicalRecord.pdf}`} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-600 underline"
+          >
+            View Existing Document
+          </a>
+  </div>
+)}
             </div>
           </div>
         </div>
