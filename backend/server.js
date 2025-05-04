@@ -1009,6 +1009,8 @@ app.get('/api/patient/:patientId/medical-records', async (req, res) => {
             })
         );
 
+        console.log('Formatted Records:', formattedRecords); // Debug the records
+
         // Sort by date (newest first)
         const sortedRecords = formattedRecords.sort((a, b) => {
             return new Date(b.date) - new Date(a.date);
@@ -1019,4 +1021,8 @@ app.get('/api/patient/:patientId/medical-records', async (req, res) => {
         console.error('Error fetching patient medical records:', error);
         res.status(500).json({ message: 'Failed to get patient medical records.' });
     }
+});
+
+app.use((req, res, next) => {
+    res.status(404).json({ message: 'File not found' });
 });
