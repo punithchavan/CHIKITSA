@@ -817,79 +817,94 @@ app.get('/api/patient/by-name/:name', async (req, res) => {
   // Create a new medical record
   app.post('/api/create-medical-record', upload.single('file'), async (req, res) => {
     try {
-      const { patientId, doctorId, description } = req.body;
-      if (!patientId || !doctorId || !description) {
-        return res.status(400).json({ message: 'Missing required fields' });
-      }
-      if (!patientId || !doctorId) {
-        return res.status(400).json({ message: 'Patient ID and Doctor ID are required.' });
-      }
-      
-      // Create a new medical record
-      const newRecord = new MedicalRecord({
-        patient_id: patientId,
-        doctor_id: doctorId,
-        description: description || '',
-        pdf: req.file ? req.file.path : null,
-        uploadedAt: new Date()
-      });
-      
-      await newRecord.save();
-      
-      res.status(201).json({ 
-        message: 'Medical record created successfully',
-        record: newRecord
-      });
+        const { patientId, doctorId, description } = req.body;
+
+        console.log('Request Body:', req.body);
+        console.log('Uploaded File:', req.file);
+
+        if (!patientId || !doctorId || !description) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        const encryptedDescription = encryptDescription(description);
+        console.log('Encrypted Description:', encryptedDescription);
+
+        const inputFilePath = req.file.path;
+        const encryptedFilePath = `${inputFilePath}.enc`;
+
+        execSync(`python Encryption.py ${inputFilePath} ${encryptedFilePath}`);
+        console.log('Encrypted File Path:', encryptedFilePath);
+
+        const normalizedFilePath = encryptedFilePath.replace(/\\/g, '/');
+        console.log('Normalized File Path:', normalizedFilePath);
+
+        const newRecord = new MedicalRecord({
+            patient_id: patientId,
+            doctor_id: doctorId,
+            description: encryptedDescription,
+            pdf: normalizedFilePath,
+        });
+
+        await newRecord.save();
+        fs.unlinkSync(inputFilePath); // Clean up original file
+
+        res.status(201).json({ message: 'Medical record uploaded successfully' });
     } catch (error) {
-      console.error('Error creating medical record:', error);
-      res.status(500).json({ message: 'Failed to create medical record.' });
+        console.error('Error uploading medical record:', error);
+        res.status(500).json({ message: 'Failed to upload medical record' });
     }
-  });
+});
   
   // Update an existing medical record
   app.put('/api/update-medical-record', upload.single('file'), async (req, res) => {
     try {
-      const { recordId, patientId, doctorId, description } = req.body;
-      
-      if (!recordId) {
-        return res.status(400).json({ message: 'Record ID is required.' });
-      }
-      
-      // Find the existing record
-      const existingRecord = await MedicalRecord.findById(recordId);
-      if (!existingRecord) {
-        return res.status(404).json({ message: 'Medical record not found.' });
-      }
-      
-      // Update the record
-      existingRecord.description = description || existingRecord.description;
-      existingRecord.uploadedAt = new Date(); // Update the upload timestamp
-      
-      // If a new file was uploaded, update the pdf field
-      if (req.file) {
-        // Delete the old file if it exists
-        if (existingRecord.pdf) {
-          try {
-            fs.unlinkSync(existingRecord.pdf);
-          } catch (unlinkError) {
-            console.error('Error deleting old file:', unlinkError);
-            // Continue even if delete fails
-          }
+        const { recordId, patientId, doctorId, description } = req.body;
+
+        console.log('Request Body:', req.body);
+        console.log('Uploaded File:', req.file);
+
+        if (!recordId) {
+            return res.status(400).json({ message: 'Record ID is required.' });
         }
-        existingRecord.pdf = req.file.path;
-      }
-      
-      await existingRecord.save();
-      
-      res.status(200).json({ 
-        message: 'Medical record updated successfully',
-        record: existingRecord
-      });
+
+        const existingRecord = await MedicalRecord.findById(recordId);
+        if (!existingRecord) {
+            return res.status(404).json({ message: 'Medical record not found.' });
+        }
+
+        existingRecord.description = encryptDescription(description || existingRecord.description);
+        existingRecord.uploadedAt = new Date();
+
+        if (req.file) {
+            if (existingRecord.pdf) {
+                try {
+                    fs.unlinkSync(existingRecord.pdf);
+                } catch (unlinkError) {
+                    console.error('Error deleting old file:', unlinkError);
+                }
+            }
+
+            const inputFilePath = req.file.path;
+            const encryptedFilePath = `${inputFilePath}.enc`;
+
+            execSync(`python Encryption.py ${inputFilePath} ${encryptedFilePath}`);
+            const normalizedFilePath = encryptedFilePath.replace(/\\/g, '/');
+            existingRecord.pdf = normalizedFilePath;
+
+            fs.unlinkSync(inputFilePath); // Clean up original file
+        }
+
+        await existingRecord.save();
+
+        res.status(200).json({
+            message: 'Medical record updated successfully',
+            record: existingRecord,
+        });
     } catch (error) {
-      console.error('Error updating medical record:', error);
-      res.status(500).json({ message: 'Failed to update medical record.' });
+        console.error('Error updating medical record:', error);
+        res.status(500).json({ message: 'Failed to update medical record.' });
     }
-  });
+});
   
   // Get all medical records for a patient
   app.get('/api/patient/:patientId/all-medical-records', async (req, res) => {
@@ -958,20 +973,28 @@ function decryptDescription(encryptedData) {
     const encryptedFilePath = path.join(__dirname, 'temp_encrypted.json');
     const decryptedFilePath = path.join(__dirname, 'temp_decrypted.txt');
 
-    // Write the encrypted data to a temporary file
-    fs.writeFileSync(encryptedFilePath, encryptedData, 'utf-8');
+    try {
+        console.log('Decrypting data:', encryptedData);
 
-    // Call the Python script to decrypt the file
-    execSync(`python Encryption.py ${encryptedFilePath} ${decryptedFilePath}`);
+        // Write the encrypted data to a temporary file
+        fs.writeFileSync(encryptedFilePath, encryptedData, 'utf-8');
 
-    // Read the decrypted data
-    const decryptedData = fs.readFileSync(decryptedFilePath, 'utf-8');
+        // Call the Python script to decrypt the file
+        execSync(`python Encryption.py ${encryptedFilePath} ${decryptedFilePath}`);
 
-    // Clean up temporary files
-    fs.unlinkSync(encryptedFilePath);
-    fs.unlinkSync(decryptedFilePath);
+        // Read the decrypted data
+        const decryptedData = fs.readFileSync(decryptedFilePath, 'utf-8');
+        console.log('Decrypted data:', decryptedData);
 
-    return decryptedData;
+        // Clean up temporary files
+        fs.unlinkSync(encryptedFilePath);
+        fs.unlinkSync(decryptedFilePath);
+
+        return decryptedData;
+    } catch (error) {
+        console.error('Error in decryptDescription:', error);
+        throw new Error('Decryption failed');
+    }
 }
 
 app.get('/api/patient/:patientId/medical-records', async (req, res) => {
@@ -981,7 +1004,7 @@ app.get('/api/patient/:patientId/medical-records', async (req, res) => {
         // Find all medical records for this patient
         const records = await MedicalRecord.find({ patient_id: patientId });
 
-        // Fetch doctor names for each record
+        // Decrypt and format records
         const formattedRecords = await Promise.all(
             records.map(async (record) => {
                 let doctorName = 'Unknown Doctor';
@@ -996,20 +1019,25 @@ app.get('/api/patient/:patientId/medical-records', async (req, res) => {
                     }
                 }
 
-                const decryptedDescription = decryptDescription(record.description);
+                // Decrypt the description
+                let decryptedDescription;
+                try {
+                    decryptedDescription = decryptDescription(record.description);
+                } catch (error) {
+                    console.error('Error decrypting description:', error);
+                    decryptedDescription = 'Failed to decrypt description';
+                }
 
                 return {
                     recordId: record._id,
                     date: record.createdAt || new Date(),
-                    description: decryptedDescription,
+                    description: decryptedDescription, // Send decrypted description
                     doctorName: doctorName,
                     doctorId: record.doctor_id,
                     pdf: record.pdf,
                 };
             })
         );
-
-        console.log('Formatted Records:', formattedRecords); // Debug the records
 
         // Sort by date (newest first)
         const sortedRecords = formattedRecords.sort((a, b) => {
@@ -1020,6 +1048,75 @@ app.get('/api/patient/:patientId/medical-records', async (req, res) => {
     } catch (error) {
         console.error('Error fetching patient medical records:', error);
         res.status(500).json({ message: 'Failed to get patient medical records.' });
+    }
+});
+
+app.get('/api/patient/medical-record/:recordId/decrypt', async (req, res) => {
+    try {
+        const recordId = req.params.recordId;
+
+        const record = await MedicalRecord.findById(recordId);
+        if (!record) {
+            return res.status(404).json({ message: 'Medical record not found.' });
+        }
+
+        let decryptedDescription;
+        try {
+            decryptedDescription = decryptDescription(record.description);
+        } catch (error) {
+            console.error('Decryption failed:', error);
+            return res.status(500).json({ message: 'Failed to decrypt medical record.' });
+        }
+
+        if (record.pdf && fs.existsSync(record.pdf)) {
+            return res.json({
+                recordId: record._id,
+                date: record.createdAt || new Date(),
+                description: decryptedDescription,
+                pdf: record.pdf,
+            });
+        } else {
+            return res.status(404).json({ message: 'File not found' });
+        }
+    } catch (error) {
+        console.error('Error decrypting medical record:', error);
+        res.status(500).json({ message: 'Failed to decrypt medical record.' });
+    }
+});
+
+app.get('/api/patient/medical-record/:recordId/decrypt', async (req, res) => {
+    try {
+        const recordId = req.params.recordId;
+
+        // Find the medical record by ID
+        const record = await MedicalRecord.findById(recordId);
+        if (!record) {
+            return res.status(404).json({ message: 'Medical record not found.' });
+        }
+
+        // Decrypt the description
+        let decryptedDescription;
+        try {
+            decryptedDescription = decryptDescription(record.description);
+        } catch (error) {
+            console.error('Error decrypting description:', error);
+            decryptedDescription = 'Failed to decrypt description';
+        }
+
+        // Check if the PDF exists and is accessible
+        if (record.pdf && fs.existsSync(record.pdf)) {
+            return res.json({
+                recordId: record._id,
+                date: record.createdAt || new Date(),
+                description: decryptedDescription,
+                pdf: record.pdf, // Send the file path for the frontend to access
+            });
+        } else {
+            return res.status(404).json({ message: 'File not found' });
+        }
+    } catch (error) {
+        console.error('Error decrypting medical record:', error);
+        res.status(500).json({ message: 'Failed to decrypt medical record.' });
     }
 });
 

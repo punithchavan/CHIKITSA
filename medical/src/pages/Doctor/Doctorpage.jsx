@@ -386,28 +386,32 @@ const handleViewAllMedicalRecords = async (appointment) => {
 
       {/* Medical Records Section */}
       {selectedPatient.medicalRecords && (
-        <>
-          <h2 className="text-2xl font-bold text-black mt-8">Medical Records</h2>
-          <div className="mt-4 space-y-4">
+    <>
+        <h2 className="text-2xl font-bold text-black mt-8">Medical Records</h2>
+        <div className="mt-4 space-y-4">
             {selectedPatient.medicalRecords.map((record, index) => (
-              <div key={index} className="border border-gray-300 rounded-lg p-4 bg-gray-50">
-                <p className="text-lg font-semibold text-gray-800">{record.description}</p>
-                <p className="text-gray-700 mt-1"><strong>Date:</strong> {new Date(record.date).toLocaleDateString()}</p>
-                {record.pdf && (
-                  <a
-                    href={`http://localhost:5000/${record.pdf}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 underline mt-2 inline-block"
-                  >
-                    View Document
-                  </a>
-                )}
-              </div>
+                <div key={index} className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                    <p className="text-lg font-semibold text-gray-800">
+                        {record.description || 'No description available'}
+                    </p>
+                    <p className="text-gray-700 mt-1">
+                        <strong>Date:</strong> {new Date(record.date).toLocaleDateString()}
+                    </p>
+                    {record.pdf && (
+                        <a
+                            href={`http://localhost:5000/${record.pdf}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 underline mt-2 inline-block"
+                        >
+                            View Document
+                        </a>
+                    )}
+                </div>
             ))}
-          </div>
-        </>
-      )}
+        </div>
+    </>
+)}
 
             {/* Status */}
             <h2 className="text-2xl font-bold text-black mt-4">Status of the Appointment</h2>

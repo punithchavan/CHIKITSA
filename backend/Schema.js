@@ -1,4 +1,7 @@
 const mongoose = require('mongoose');
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
 
 // Define User schema
 const userSchema = new mongoose.Schema({
@@ -129,6 +132,75 @@ adminSchema.pre('save', async function (next) {
   }
 });
 
+function encryptDescription(description) {
+    const inputFilePath = path.join(__dirname, 'temp_description.txt');
+    const encryptedFilePath = path.join(__dirname, 'temp_encrypted.json');
+
+    try {
+        // Write the description to a temporary file
+        fs.writeFileSync(inputFilePath, description, 'utf-8');
+
+        // Call the Python script to encrypt the file
+        execSync(`python Encryption.py ${inputFilePath} ${encryptedFilePath}`);
+
+        // Read the encrypted data
+        const encryptedData = fs.readFileSync(encryptedFilePath, 'utf-8');
+
+        // Clean up temporary files
+        fs.unlinkSync(inputFilePath);
+        fs.unlinkSync(encryptedFilePath);
+
+        return encryptedData;
+    } catch (error) {
+        console.error('Error in encryptDescription:', error);
+        throw new Error('Encryption failed');
+    }
+}
+
+app.get('/api/patient/:patientId/medical-records', async (req, res) => {
+    try {
+        const patientId = req.params.patientId;
+
+        const records = await MedicalRecord.find({ patient_id: patientId });
+
+        const formattedRecords = await Promise.all(
+            records.map(async (record) => {
+                let doctorName = 'Unknown Doctor';
+                if (record.doctor_id) {
+                    try {
+                        const doctor = await Doctor.findById(record.doctor_id);
+                        if (doctor) {
+                            doctorName = doctor.name;
+                        }
+                    } catch (err) {
+                        console.error(`Error fetching doctor with ID ${record.doctor_id}:`, err);
+                    }
+                }
+
+                // Decrypt the description
+                const decryptedDescription = decryptDescription(record.description);
+
+                return {
+                    recordId: record._id,
+                    date: record.createdAt || new Date(),
+                    description: decryptedDescription, // Send decrypted description
+                    doctorName: doctorName,
+                    doctorId: record.doctor_id,
+                    pdf: record.pdf,
+                };
+            })
+        );
+
+        const sortedRecords = formattedRecords.sort((a, b) => {
+            return new Date(b.date) - new Date(a.date);
+        });
+
+        res.json(sortedRecords);
+    } catch (error) {
+        console.error('Error fetching patient medical records:', error);
+        res.status(500).json({ message: 'Failed to get patient medical records.' });
+    }
+});
 
 // Create models
 const User = mongoose.model('User', userSchema);
