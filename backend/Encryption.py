@@ -6,11 +6,6 @@ import csv
 import xml.etree.ElementTree as ET
 import os
 import sys
-import io
-
-# Set stdout and stderr to use UTF-8 encoding
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 def save_key(key_file, key):
     with open(key_file, 'wb') as f:
@@ -77,24 +72,18 @@ def encrypt_file(input_file, output_file, key, is_json=False):
         plaintext = f.read()
     
     encrypted_data = encrypt_data(plaintext, key)
-    print(f"Encrypting file: {input_file} -> {output_file}")
-
+    
     with open(output_file, "w", encoding="utf-8") as json_file:
         json.dump(encrypted_data, json_file, indent=4)
 
 def decrypt_file(encrypted_file, output_file, key):
-    try:
-        with open(encrypted_file, 'r', encoding="utf-8") as f:
-            encrypted_data = json.load(f)
-        
-        plaintext = decrypt_data(encrypted_data, key)
-        print(f"Decrypting file: {encrypted_file} -> {output_file}")
-
-        with open(output_file, 'wb') as f:
-            f.write(plaintext)
-    except Exception as e:
-        print(f"Error decrypting file: {e}")
-        raise
+    with open(encrypted_file, 'r', encoding="utf-8") as f:
+        encrypted_data = json.load(f)
+    
+    plaintext = decrypt_data(encrypted_data, key)
+    
+    with open(output_file, 'wb') as f:
+        f.write(plaintext)
 
 def detect_file_type(file_path):
     return os.path.splitext(file_path)[1].lower()
@@ -137,4 +126,4 @@ if __name__ == "__main__":
             f.write(json_data)
 
         encrypt_file(json_file, output_file, key)
-        print(f"\u2705 Non-PDF file converted to JSON and encrypted. Output saved to {output_file}")
+        print(f"✅ Non-PDF file converted to JSON and encrypted. Output saved to {output_file}")
