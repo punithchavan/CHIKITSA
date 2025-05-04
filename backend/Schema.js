@@ -1,7 +1,4 @@
 const mongoose = require('mongoose');
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
 
 // Define User schema
 const userSchema = new mongoose.Schema({
@@ -131,7 +128,6 @@ adminSchema.pre('save', async function (next) {
     next();
   }
 });
-
 
 
 // Create models
