@@ -60,14 +60,11 @@ function Doctorpage() {
 
   const fetchExistingMedicalRecord = async (patientName) => {
     try {
-      // Find patient by name to get their patient_id
       const patientResponse = await axios.get(`http://localhost:5000/api/patient/by-name/${patientName}`);
-      
       if (patientResponse.data && patientResponse.data._id) {
         const medicalRecordResponse = await axios.get(
           `http://localhost:5000/api/medical-record/${patientResponse.data._id}/${doctorDetails._id}`
         );
-        
         if (medicalRecordResponse.data) {
           setExistingMedicalRecord(medicalRecordResponse.data);
           setDescription(medicalRecordResponse.data.description || "");
@@ -76,7 +73,7 @@ function Doctorpage() {
       }
       return false;
     } catch (error) {
-      console.log("No existing medical record found or error fetching:", error);
+      console.error("Error fetching existing medical record:", error);
       return false;
     }
   };
@@ -84,9 +81,8 @@ function Doctorpage() {
   // 2. Update handleMedicalRecordSubmit function
 const handleMedicalRecordSubmit = async () => {
   if (!selectedPatient) return;
-  
+
   try {
-    // Find patient by name
     const patientResponse = await axios.get(`http://localhost:5000/api/patient/by-name/${selectedPatient.name}`);
     if (!patientResponse.data) {
       alert("Patient not found.");
@@ -103,22 +99,20 @@ const handleMedicalRecordSubmit = async () => {
     formData.append('patientId', patientId);
     formData.append('doctorId', doctorId);
     formData.append('description', description);
-    
-    // If we have an existing record, update it
+
     if (existingMedicalRecord) {
       formData.append('recordId', existingMedicalRecord._id);
       await axios.put('http://localhost:5000/api/update-medical-record', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       alert("Medical record updated successfully");
     } else {
-      // Otherwise create a new one
       await axios.post('http://localhost:5000/api/create-medical-record', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       alert("Medical record created successfully");
     }
-    
+
     setShowModal(false);
     setSelectedFile(null);
     setDescription("");
@@ -186,7 +180,6 @@ const handleViewAllMedicalRecords = async (appointment) => {
     const patientId = patientResponse.data._id;
     const medicalRecordsResponse = await axios.get(`http://localhost:5000/api/patient/${patientId}/medical-records`);
     if (medicalRecordsResponse.data && medicalRecordsResponse.data.length > 0) {
-      // Display the medical records in a modal
       setSelectedPatient({ ...appointment, medicalRecords: medicalRecordsResponse.data });
       setShowModal(true);
     } else {

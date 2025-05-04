@@ -213,19 +213,18 @@ const HomeView = ({ patientDetails, appointments, medicalRecords, cancelAppointm
                   <span className="text-gray-700 font-medium">Doctor:</span>
                   <span>{record.doctorName}</span>
                 </div>
-                {record.recordId && (
-  <div className="mt-3">
-    <a 
-      href={`http://localhost:5000/api/patient/medical-record/${record.recordId}`} 
-      target="_blank" 
-      rel="noopener noreferrer"
-      className="bg-blue-100 text-blue-700 px-3 py-1 rounded-md hover:bg-blue-200 transition inline-flex items-center gap-1"
-    >
-      View Document
-    </a>
-  </div>
-)}
-
+                {record.pdf && (
+                  <div className="mt-3">
+                    <a 
+                      href={`http://localhost:5000/${record.pdf}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="bg-blue-100 text-blue-700 px-3 py-1 rounded-md hover:bg-blue-200 transition inline-flex items-center gap-1"
+                    >
+                      View Document
+                    </a>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -326,13 +325,13 @@ const PatientPage = () => {
       const response = await axios.post(`http://localhost:5000/api/appointment/${appointmentId}/cancel`);
       
       if (response.status === 200) {
-        // Remove cancelled appointment from the display
+        // Remove canceled appointment from the display
         setAppointments(appointments.filter(app => app.appointmentId !== appointmentId));
         
-        alert("Appointment cancelled successfully");
+        alert("Appointment canceled successfully");
       }
     } catch (error) {
-      console.error("Error cancelling appointment:", error);
+      console.error("Error canceling appointment:", error);
       alert("Failed to cancel appointment. Please try again.");
     }
   };
