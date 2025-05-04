@@ -47,27 +47,84 @@ const getRandomHealthTips = (count = 2) => {
 };
 
 const HomeView = ({ patientDetails, appointments, medicalRecords, cancelAppointment }) => {
+  // Get random health tips on component render or refresh
   const [healthTips, setHealthTips] = useState(getRandomHealthTips());
   const [showMoreAppointments, setShowMoreAppointments] = useState(false);
-
+  
+  // Get the next upcoming appointment - already sorted from the backend
   const nextAppointment = appointments && appointments.length > 0 ? appointments[0] : null;
 
+  // Function to format date to a more readable format
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('en-US', options);
   };
 
+  // Refresh health tips
   const refreshTips = () => {
     setHealthTips(getRandomHealthTips());
   };
 
   return (
-    <div className="space-y-6">
-      {/* Appointments and Health Tips Section */}
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Your Next Appointment */}
-        <div className="flex-1 bg-white border-2 border-black-400 rounded-xl shadow-md p-6">
+    <div className="p-4">
+      {/* Modal for more appointments */}
+      {showMoreAppointments && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-11/12 max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-gray-900">All Upcoming Appointments</h3>
+              <button 
+                onClick={() => setShowMoreAppointments(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              {appointments.slice(1).map((appointment, index) => (
+                <div key={index} className="border border-gray-300 rounded-lg p-4 bg-gray-50 hover:bg-gray-100 transition">
+                  <div className="flex justify-between flex-wrap">
+                    <span className="font-medium text-gray-900">{formatDate(appointment.date)}</span>
+                    <span className="text-gray-700">{appointment.time}</span>
+                  </div>
+                  <div className="mt-2 text-gray-800"><strong>Doctor:</strong> Dr. {appointment.doctorName}</div>
+                  <div className="mt-1 text-gray-600">{appointment.reason}</div>
+                  
+                  <div className="mt-3 flex justify-end">
+                    <button 
+                      onClick={() => cancelAppointment(appointment.appointmentId)}
+                      className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      Cancel Appointment
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-6 text-center">
+              <button 
+                onClick={() => setShowMoreAppointments(false)}
+                className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    
+      <div className="flex flex-row gap-6 flex-wrap">
+        {/* Appointments Box */}
+        <div className="bg-white border-2 border-black-400 rounded-xl shadow-md p-6 w-full md:w-7/15">
           <h2 className="text-2xl font-bold text-black-600 mb-4">Your Next Appointment:</h2>
+
           {nextAppointment ? (
             <div className="border-2 border-gray-300 rounded-xl p-4 bg-gray-50 flex flex-col gap-3 text-gray-700 text-lg">
               <div className="flex gap-2">
@@ -88,35 +145,64 @@ const HomeView = ({ patientDetails, appointments, medicalRecords, cancelAppointm
               <p>No upcoming appointments scheduled.</p>
             </div>
           )}
+
+          <div className="mt-6 bg-teal-50 border border-teal-300 p-4 rounded-xl space-y-3">
+            <div className="flex items-start gap-2">
+              <span className="text-teal-600 text-xl">✅</span>
+              <p className="text-gray-700">Please arrive 10 minutes early.</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-teal-600 text-xl">✅</span>
+              <p className="text-gray-700">
+                Upload all relevant medical reports in your profile beforehand.
+              </p>
+            </div>
+          </div>
+
+          {/* "more" link for additional appointments */}
+          {appointments && appointments.length > 1 && (
+            <div className="mt-3 text-center">
+              <button 
+                onClick={() => setShowMoreAppointments(true)}
+                className="text-teal-600 hover:text-teal-800 hover:underline text-sm font-medium"
+              >
+                View more appointments ({appointments.length - 1})
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Small Changes, Big Impact */}
-        <div className="flex-1 bg-teal-50 border-2 border-black-400 p-6 rounded-xl">
+        {/* Small Changes, Big Impact Box - Fixed size with scrollable content */}
+        <div className="bg-teal-50 border-2 border-black-400 p-6 rounded-xl md:w-180 w-full h-120 flex flex-col">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold text-black-700">Small Changes, Big Impact:</h2>
-            <button
-              onClick={refreshTips}
+            <button 
+              onClick={refreshTips} 
               className="bg-teal-600 text-white px-3 py-1 rounded-lg hover:bg-teal-700 transition"
             >
               Refresh Tips
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <div className="flex-grow overflow-y-auto">
             {healthTips.map((tip, index) => (
-              <div key={index} className="bg-white p-4 rounded-lg shadow-sm">
+              <div key={index} className={`${index > 0 ? 'mt-4' : ''} bg-white p-4 rounded-lg shadow-sm`}>
                 <h3 className="font-bold text-lg text-teal-600 mb-1">{tip.title}</h3>
-                <p className="text-gray-700">{tip.description}</p>
+                <p className="text-gray-700">
+                  {tip.description}
+                </p>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Medical History Section */}
-      <div className="bg-white border-2 border-black-400 rounded-xl shadow-md p-6">
+      {/* Medical History Box - Added below the appointment and health tips sections */}
+      <div className="bg-white border-2 border-black-400 rounded-xl shadow-md p-6 w-full mt-6">
         <h2 className="text-2xl font-bold text-black-600 mb-4">Medical History</h2>
+        
         {medicalRecords && medicalRecords.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-6">
             {medicalRecords.map((record, index) => (
               <div key={index} className="border border-gray-300 rounded-lg p-4 hover:bg-gray-50 transition">
                 <div className="flex justify-between items-start">
@@ -127,18 +213,19 @@ const HomeView = ({ patientDetails, appointments, medicalRecords, cancelAppointm
                   <span className="text-gray-700 font-medium">Doctor:</span>
                   <span>{record.doctorName}</span>
                 </div>
-                {record.pdf && (
-                  <div className="mt-3">
-                    <a
-                      href={`http://localhost:5000/${record.pdf}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-blue-100 text-blue-700 px-3 py-1 rounded-md hover:bg-blue-200 transition inline-flex items-center gap-1"
-                    >
-                      View Document
-                    </a>
-                  </div>
-                )}
+                {record.recordId && (
+  <div className="mt-3">
+    <a 
+      href={`http://localhost:5000/api/patient/medical-record/${record.recordId}/decrypt`} 
+      target="_blank" 
+      rel="noopener noreferrer"
+      className="bg-blue-100 text-blue-700 px-3 py-1 rounded-md hover:bg-blue-200 transition inline-flex items-center gap-1"
+    >
+      View Document
+    </a>
+  </div>
+)}
+
               </div>
             ))}
           </div>
@@ -197,18 +284,13 @@ const PatientPage = () => {
           const patientId = patientResponse.data._id;
           
           try {
-            // Fetch appointments
+            // Fetch appointments - already sorted by date and time from backend
             const appointmentsResponse = await axios.get(`http://localhost:5000/api/patient/${patientId}/appointments`);
             console.log("Appointments received:", appointmentsResponse.data);
             
-            // Sort appointments by date and time
-            const sortedAppointments = appointmentsResponse.data.sort((a, b) => {
-              const dateA = new Date(`${a.date} ${a.time}`);
-              const dateB = new Date(`${b.date} ${b.time}`);
-              return dateA - dateB;
-            });
-            
-            const scheduledAppointments = sortedAppointments.filter(app => app.status === 'scheduled');
+            // No need to sort appointments here as they're already sorted by the backend
+            // Just filter by scheduled status if needed
+            const scheduledAppointments = appointmentsResponse.data.filter(app => app.status === 'scheduled');
             setAppointments(scheduledAppointments);
 
           } catch (appointmentsErr) {
@@ -244,12 +326,7 @@ const PatientPage = () => {
       const response = await axios.post(`http://localhost:5000/api/appointment/${appointmentId}/cancel`);
       
       if (response.status === 200) {
-        // Update appointments list
-        setAppointments(appointments.map(app => 
-          app.appointmentId === appointmentId ? { ...app, status: 'cancelled' } : app
-        ));
-        
-        // Remove cancelled appointments from the display
+        // Remove cancelled appointment from the display
         setAppointments(appointments.filter(app => app.appointmentId !== appointmentId));
         
         alert("Appointment cancelled successfully");
@@ -288,7 +365,6 @@ const PatientPage = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <MdSettings className="text-3xl cursor-pointer text-gray-700 hover:text-gray-900 transition" />
           {/* Logout Button */}
           <button 
             onClick={handleLogout}
@@ -329,6 +405,9 @@ const PatientPage = () => {
               </p>
               <p>
                 <strong>Contact:</strong> {patientDetails.contact_info || "Not provided"}
+              </p>
+              <p>
+                <strong>Patient ID:</strong> {patientDetails.patient_id || "Not provided"}
               </p>
             </div>
           ) : (
