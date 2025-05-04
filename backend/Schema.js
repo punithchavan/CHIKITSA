@@ -67,24 +67,41 @@ const appointmentSchema = new mongoose.Schema({
 const medicalRecordSchema = new mongoose.Schema({
   patient_id: {
     type: String,
-    required: true
+    required: true,
+    index: true // Index for faster queries
   },
   doctor_id: {
     type: String,
-    required: true
+    required: true,
+    index: true // Index for faster queries
   },
   pdf: {
-    type: String, 
+    type: String, // Path to the encrypted PDF file
+    validate: {
+      validator: function (v) {
+        return /^(http|https|[\\/]*uploads[\\/])/.test(v); // Allow both forward and backslashes
+      },
+      message: props => `${props.value} is not a valid file path or URL!`
+    }
   },
   description: {
+    type: String, // This will store the encrypted description
+    required: true
+  },
+  pdfEncryptionMetadata: {
+    algorithm: { type: String, default: 'AES-GCM' },
+    keyVersion: { type: String, default: 'v1' }
+  },
+  decryptionStatus: {
     type: String,
-    default: ''
+    enum: ['encrypted', 'decrypted'],
+    default: 'encrypted'
   },
   uploadedAt: {
     type: Date,
     default: Date.now
   }
-});
+}, { timestamps: true }); // Automatically adds createdAt and updatedAt fields
 
   
 const adminSchema = new mongoose.Schema({
