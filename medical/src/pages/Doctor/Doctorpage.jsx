@@ -175,6 +175,28 @@ const handleMedicalRecordSubmit = async () => {
     window.location.href = '/';
   };
   
+const handleViewAllMedicalRecords = async (appointment) => {
+  try {
+    const patientResponse = await axios.get(`http://localhost:5000/api/patient/by-name/${appointment.name}`);
+    if (!patientResponse.data) {
+      alert("Patient not found.");
+      return;
+    }
+
+    const patientId = patientResponse.data._id;
+    const medicalRecordsResponse = await axios.get(`http://localhost:5000/api/patient/${patientId}/medical-records`);
+    if (medicalRecordsResponse.data && medicalRecordsResponse.data.length > 0) {
+      // Display the medical records in a modal
+      setSelectedPatient({ ...appointment, medicalRecords: medicalRecordsResponse.data });
+      setShowModal(true);
+    } else {
+      alert("No medical records found for this patient.");
+    }
+  } catch (error) {
+    console.error("Error fetching medical records:", error);
+    alert("Failed to fetch medical records. Please try again.");
+  }
+};
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f0f0f0] overflow-hidden">
@@ -195,7 +217,7 @@ const handleMedicalRecordSubmit = async () => {
             Schedule
           </button>
           <button
-            className={`hover:text-black pb-1 ${selectedTab === "patientList" ? "border-b-2 border-black" : ""}`}
+            class={`hover:text-black pb-1 ${selectedTab === "patientList" ? "border-b-2 border-black" : ""}`}
             onClick={() => setSelectedTab("patientList")}
           >
             Patient List
@@ -269,25 +291,41 @@ const handleMedicalRecordSubmit = async () => {
                   // In the appointments.map section of Doctorpage.jsx
                   // In the appointments map:
                   appointments.map((appointment, idx) => (
-                  <button
-                    key={idx}
-                    className="border border-gray-300 rounded-xl p-4 mb-4 shadow-md bg-white hover:bg-gray-200 text-left w-full"
-                    onClick={() => handlePatientClick(appointment)}
-                  >
-                <div className="flex justify-between items-start">
-                  <p className="text-lg font-semibold text-gray-800">
-                    Name: {appointment.name}
-                  </p>
-                <div className="text-right">
-                  <p className="text-gray-700"><strong>Date:</strong> {appointment.date}</p>
-                  <p className="text-gray-700"><strong>Time:</strong> {appointment.time}</p>
-                </div>
-              </div>
-              <div className="mt-2">
-                <p className="text-gray-700"><strong>Reason:</strong> {appointment.reason}</p>
-              </div>
-                  </button>
-                  ))
+  <button
+    key={idx}
+    className="relative border border-gray-300 rounded-xl p-4 mb-6 shadow-md bg-white hover:bg-gray-200 text-left w-full"
+    onClick={() => handlePatientClick(appointment)}
+  >
+    {/* Name and Reason */}
+    <div className="mb-4">
+      <p className="text-lg font-semibold text-gray-800">
+        Name: {appointment.name}
+      </p>
+      <p className="text-gray-700 mt-1">
+        <strong>Reason:</strong> {appointment.reason}
+      </p>
+    </div>
+
+    {/* Date, Time, and Medical Records Button */}
+    <div className="absolute top-4 right-4 text-right">
+      <p className="text-gray-700">
+        <strong>Date:</strong> {appointment.date}
+      </p>
+      <p className="text-gray-700">
+        <strong>Time:</strong> {appointment.time}
+      </p>
+      <button
+        className="text-blue-600 underline hover:text-blue-800 transition mt-2"
+        onClick={(e) => {
+          e.stopPropagation(); // Prevent triggering the parent button's onClick
+          handleViewAllMedicalRecords(appointment);
+        }}
+      >
+        View All Medical Records
+      </button>
+    </div>
+  </button>
+))
                 )}
               </div>
             </>
@@ -310,9 +348,6 @@ const handleMedicalRecordSubmit = async () => {
                           <p className="text-gray-700"><strong>Age:</strong> {patient.age}</p>
                           <p className="text-gray-700"><strong>Contact:</strong> {patient.contact}</p>
                         </div>
-                        <div>
-                          <p className="text-gray-700"><strong>Condition:</strong> {patient.condition}</p>
-                        </div>
                       </div>
                     </button>
                   ))
@@ -326,29 +361,53 @@ const handleMedicalRecordSubmit = async () => {
 
       {/* Modal */}
       {showModal && selectedPatient && (
-        <div className="fixed inset-0 bg-gray-200 bg-opacity-80 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-150 h-150 p-6 relative max-w-4xl max-h-[90vh] overflow-y-auto">
-            <button onClick={closeModal} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
-              <MdClose className="text-2xl" />
-            </button>
-            
-                  {/* Patient Details */}
-                  <h2 className="text-2xl font-bold text-black mb-4">Patient Details</h2>
-                  <div className="bg-gray-100 p-4 rounded-lg mb-6 relative">
-                    <p className="text-xl font-semibold text-gray-800">{selectedPatient.name}</p>
-                    <p className="text-gray-700 mt-1"><strong>Reason:</strong> {selectedPatient.reason || "General Consultation"}</p>
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                      <div>
-                        {selectedPatient.age && <p className="text-gray-700"><strong>Age:</strong> {selectedPatient.age}</p>}
-                        {selectedPatient.contact && <p className="text-gray-700"><strong>Contact:</strong> {selectedPatient.contact}</p>}
-                      </div>
-                    </div>
-                    <div className="absolute top-4 right-4 text-gray-700">
-                      <p><strong>Date:</strong> {selectedPatient.date || "Not specified"}</p>
-                      <p><strong>Time:</strong> {selectedPatient.time || "Not specified"}</p>
-                    </div>
-                  </div>
+  <div className="fixed inset-0 bg-gray-200 bg-opacity-80 flex items-center justify-center z-50">
+    <div className="bg-white rounded-lg shadow-xl w-150 h-150 p-6 relative max-w-4xl max-h-[90vh] overflow-y-auto">
+      <button onClick={closeModal} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+        <MdClose className="text-2xl" />
+      </button>
 
+      {/* Patient Details */}
+      <h2 className="text-2xl font-bold text-black mb-4">Patient Details</h2>
+      <div className="bg-gray-100 p-4 rounded-lg mb-6 relative">
+        <p className="text-xl font-semibold text-gray-800">{selectedPatient.name}</p>
+        <p className="text-gray-700 mt-1"><strong>Reason:</strong> {selectedPatient.reason || "General Consultation"}</p>
+        <div className="grid grid-cols-2 gap-4 mt-2">
+          <div>
+            {selectedPatient.age && <p className="text-gray-700"><strong>Age:</strong> {selectedPatient.age}</p>}
+            {selectedPatient.contact && <p className="text-gray-700"><strong>Contact:</strong> {selectedPatient.contact}</p>}
+          </div>
+        </div>
+        <div className="absolute top-4 right-4 text-gray-700">
+          <p><strong>Date:</strong> {selectedPatient.date || "Not specified"}</p>
+          <p><strong>Time:</strong> {selectedPatient.time || "Not specified"}</p>
+        </div>
+      </div>
+
+      {/* Medical Records Section */}
+      {selectedPatient.medicalRecords && (
+        <>
+          <h2 className="text-2xl font-bold text-black mt-8">Medical Records</h2>
+          <div className="mt-4 space-y-4">
+            {selectedPatient.medicalRecords.map((record, index) => (
+              <div key={index} className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                <p className="text-lg font-semibold text-gray-800">{record.description}</p>
+                <p className="text-gray-700 mt-1"><strong>Date:</strong> {new Date(record.date).toLocaleDateString()}</p>
+                {record.pdf && (
+                  <a
+                    href={`http://localhost:5000/${record.pdf}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline mt-2 inline-block"
+                  >
+                    View Document
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
             {/* Status */}
             <h2 className="text-2xl font-bold text-black mt-4">Status of the Appointment</h2>
