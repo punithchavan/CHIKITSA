@@ -6,6 +6,7 @@ import csv
 import xml.etree.ElementTree as ET
 import os
 import sys
+sys.stdout.reconfigure(encoding='utf-8')  # Add this line at the top of the script
 
 def save_key(key_file, key):
     with open(key_file, 'wb') as f:
@@ -109,7 +110,7 @@ if __name__ == "__main__":
 
     if file_type == ".pdf":
         encrypt_file(input_file, output_file, key)
-        print(f"✅ PDF encrypted successfully. Output saved to {output_file}")
+        print(f"[SUCCESS] PDF encrypted successfully. Output saved to {output_file}")
     else:
         json_file = "converted_data.json"
         if file_type == ".csv":
@@ -119,11 +120,11 @@ if __name__ == "__main__":
         elif file_type == ".txt":
             json_data = txt_to_json(input_file)
         else:
-            print("❌ Unsupported file type!")
+            print("[ERROR] Unsupported file type!")
             exit()
         
         with open(json_file, "w", encoding="utf-8") as f:
             f.write(json_data)
 
         encrypt_file(json_file, output_file, key)
-        print(f"✅ Non-PDF file converted to JSON and encrypted. Output saved to {output_file}")
+        print(f"[SUCCESS] Non-PDF file converted to JSON and encrypted. Output saved to {output_file}")
