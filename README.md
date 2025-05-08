@@ -31,6 +31,19 @@ Chikitsa is a secure, role-based, encrypted medical data management system desig
 
 ---
 
+### Backend
+
+- **cors** `v2.8.5` — Cross-Origin Resource Sharing  
+  - **object-assign** `v4.1.1` — Object property assignment utility  
+  - **vary** `v1.1.2` — HTTP header control middleware  
+- **bcryptjs** — Password hashing  
+- **dotenv** — Environment variable management  
+- **express** — Backend server framework  
+- **jsonwebtoken** — JWT authentication  
+- **mongoose** — MongoDB Object Data Modeling  
+- **multer** — File upload handling  
+- **nodemon** — Auto-restarting dev server
+
 ## 📦 Features
 
 - Secure user authentication and role-based dashboards.
