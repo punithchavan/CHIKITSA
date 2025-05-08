@@ -94,9 +94,9 @@ The purpose of the **Chikitsa Medical Data Encryption System** is to securely ma
 
 You can find the detailed project documentation here:
 
-[📑 Software Requirements Specification ](./Documentation/Chikitsa.pdf)
-[📑 Statement of Work ](./Documentation/Statement_of_Work_v2.0.pdf)
-[📑 Software Design Specification ](./Documentation/sds.pdf)
+[📑 Software Requirements Specification ](./documentation/Chikitsa.pdf)
+[📑 Statement of Work ](./documentation/Statement_of_Work_v2.0.pdf)
+[📑 Software Design Specification ](./documentation/sds.pdf)
 
 
 ## 👥 Team Members
