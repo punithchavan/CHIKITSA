@@ -11,6 +11,12 @@ Chikitsa is a secure, role-based, encrypted medical data management system desig
 
 ---
 
+## 📌 Purpose
+
+The purpose of the **Chikitsa Medical Data Encryption System** is to securely manage and protect sensitive patient records by implementing encrypted storage and role-based access control. It ensures that only authorized patients, doctors, and administrators can view or modify medical data, while maintaining privacy, data integrity, and compliance with healthcare data protection regulations.
+
+---
+
 ## 🎯 Objectives
 
 - Develop a secure, encrypted medical record management system.
