@@ -17,6 +17,41 @@ The purpose of the **Chikitsa Medical Data Encryption System** is to securely ma
 
 ---
 
+## 🚀 Run the Frontend
+
+To set up and run the frontend part of the project, follow these steps:
+
+### 📥 Navigate to the frontend directory and install dependencies
+
+```bash
+cd frontend
+npm install
+```
+### Start the frontend server
+```bash
+npm run dev
+```
+
+## 🚀 Run the Backend
+
+To set up and run the backend part of the project, follow these steps:
+
+### 📥 Navigate to the backend directory and install dependencies
+
+```bash
+cd backend
+npm install
+```
+### Start the backend server
+```
+node server
+```
+###
+📌 Note:
+The backend server should be started from the following directories as applicable:
+- Backend folder
+- Medical folder
+
 ## 🎯 Objectives
 
 - Develop a secure, encrypted medical record management system.
@@ -97,6 +132,7 @@ You can find the detailed project documentation here:
 - [📑 Software Requirements Specification ](./documentation/Chikitsa.pdf)
 - [📑 Statement of Work ](./documentation/Statement_of_Work_v2.0.pdf)
 - [📑 Software Design Specification ](./documentation/sds.pdf)
+- [📑 Software Test Plan ](./documentation/software_test_plan.pdf)
 
 
 ## 👥 Team Members
