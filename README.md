@@ -132,7 +132,7 @@ You can find the detailed project documentation here:
 - [📑 Software Requirements Specification ](./documentation/Chikitsa.pdf)
 - [📑 Statement of Work ](./documentation/Statement_of_Work_v2.0.pdf)
 - [📑 Software Design Specification ](./documentation/sds.pdf)
-- [📑 Software Test Plan ](./documentation/software_test_plan.pdf)
+- [📑 Software Test Plan ](./documentation/software_test_plan.xlsx)
 
 
 ## 👥 Team Members
