@@ -3,7 +3,7 @@
 **Version:** 1.0  
 **Developed by:** Software Engineering Team-5, Mahindra University  
 **Course:** Software Engineering  
-**Instructor:** Vijay Rao  
+**Instructor:** Prof. Vijay Rao
 
 ## 📌 Project Overview
 
