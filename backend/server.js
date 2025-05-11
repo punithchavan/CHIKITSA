@@ -823,48 +823,69 @@ app.get('/api/patient/by-name/:name', async (req, res) => {
         throw new Error('Failed to encrypt file');
     }
 }
-  // Create a new medical record
+
 // Create a new medical record with encryption
 app.post('/api/create-medical-record', upload.single('file'), async (req, res) => {
   try {
     const { patientId, doctorId, description } = req.body;
+    
+    // Validate required fields
     if (!patientId || !doctorId || !description) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
-    if (!patientId || !doctorId) {
-      return res.status(400).json({ message: 'Patient ID and Doctor ID are required.' });
+
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
     }
 
+    // Setup file paths
     const inputFilePath = req.file.path;
-    const encryptedFilePath = `${inputFilePath}.json`; // Change to .json for encrypted file
+    const encryptedFilePath = `${inputFilePath}.json`;
 
-    // Encrypt the uploaded file (calling Python script for encryption)
-    const command = `python Encryption.py encrypt "${inputFilePath}" "${encryptedFilePath}"`;
-    execSync(command); // Run the encryption command
-    
-    // Create a new medical record with the encrypted file path
-    const newRecord = new MedicalRecord({
-      patient_id: patientId,
-      doctor_id: doctorId,
-      description: description || '',
-      pdf: encryptedFilePath,  // Store the encrypted file path
-      uploadedAt: new Date(),
-    });
-    
-    await newRecord.save();
-    
+    try {
+      // Run encryption command
+      const command = `python Encryption.py encrypt "${inputFilePath}" "${encryptedFilePath}"`;
+      execSync(command);
 
-    res.status(201).json({
-      message: 'Medical record created successfully',
-      record: newRecord,
-    });
+      // Create new medical record with encrypted file path
+      const newRecord = new MedicalRecord({
+        patient_id: patientId,
+        doctor_id: doctorId,
+        description: description,
+        pdf: encryptedFilePath, // Store the encrypted file path
+        uploadedAt: new Date()
+      });
+
+      await newRecord.save();
+
+      // Clean up the original unencrypted file
+      fs.unlinkSync(inputFilePath);
+
+      res.status(201).json({
+        message: 'Medical record created successfully',
+        record: newRecord
+      });
+
+    } catch (encryptionError) {
+      // Clean up files in case of encryption failure
+      try {
+        if (fs.existsSync(inputFilePath)) fs.unlinkSync(inputFilePath);
+        if (fs.existsSync(encryptedFilePath)) fs.unlinkSync(encryptedFilePath);
+      } catch (cleanupError) {
+        console.error('Error during cleanup:', cleanupError);
+      }
+      throw new Error(`Encryption failed: ${encryptionError.message}`);
+    }
+
   } catch (error) {
     console.error('Error creating medical record:', error);
-    res.status(500).json({ message: 'Failed to create medical record.' });
+    res.status(500).json({ 
+      message: 'Failed to create medical record',
+      error: error.message 
+    });
   }
 });
-
-
   
   // Update an existing medical record
   app.put('/api/update-medical-record', upload.single('file'), async (req, res) => {
@@ -965,6 +986,33 @@ app.post('/api/create-medical-record', upload.single('file'), async (req, res) =
 
   
 
+app.get('/api/view-file/:fileId', async (req, res) => {
+  try {
+    // Get the medical record
+    const record = await MedicalRecord.findById(req.params.fileId);
+    if (!record || !record.pdf) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+
+    // Decrypt the file
+    const encryptedFilePath = record.pdf;
+    const tempOutputPath = path.join('uploads', `temp_${Date.now()}_${path.basename(record.pdf, '.json')}`);
+    
+    // Use the decrypt command from Encryption.py
+    execSync(`python Encryption.py decrypt "${encryptedFilePath}" "${tempOutputPath}"`);
+
+    // Send the decrypted file and clean up afterward
+    res.sendFile(path.resolve(tempOutputPath), {}, (err) => {
+      if (fs.existsSync(tempOutputPath)) {
+        fs.unlinkSync(tempOutputPath);
+      }
+    });
+
+  } catch (error) {
+    console.error('Error serving file:', error);
+    res.status(500).json({ message: 'Error serving file' });
+  }
+});
 
 
 app.use((req, res, next) => {

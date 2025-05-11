@@ -216,13 +216,13 @@ const HomeView = ({ patientDetails, appointments, medicalRecords, cancelAppointm
                 {record.pdf && (
                   <div className="mt-3">
                     <a 
-                      href={`http://localhost:5000/${record.pdf.replace('.json', '')}`}  
+                      href={`http://localhost:5000/api/view-file/${record.recordId}`}  
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="bg-blue-100 text-blue-700 px-3 py-1 rounded-md hover:bg-blue-200 transition inline-flex items-center gap-1"
                     >
-                      View Document
-                    </a>
+                  View Document
+                  </a>
                   </div>
                 )}
               </div>

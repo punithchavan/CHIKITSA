@@ -387,13 +387,26 @@ function Doctorpage() {
                 <p className="text-gray-700 mt-1"><strong>Date:</strong> {new Date(record.date).toLocaleDateString()}</p>
                 {record.pdf && (
                   <a
-                  href={`http://localhost:5000/${record.pdf.replace('.json', '')}`}
+                    href={`http://localhost:5000/api/view-file/${record._id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 underline mt-2 inline-block"
                   >
                     View Document
                   </a>
+                )}
+
+                {existingMedicalRecord && existingMedicalRecord.pdf && (
+                  <div className="mt-4">
+                    <a 
+                      href={`http://localhost:5000/api/view-file/${existingMedicalRecord._id}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline"
+                    >
+                      View Existing Document
+                    </a>
+                  </div>
                 )}
               </div>
             ))}
