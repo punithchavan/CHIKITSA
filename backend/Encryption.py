@@ -78,26 +78,27 @@ def encrypt_file(input_file, output_file, key, is_json=False):
         json.dump(encrypted_data, json_file, indent=4)
 
 def decrypt_file(encrypted_file, output_file, key):
+    output_file = os.path.join("uploads", os.path.basename(output_file))
     with open(encrypted_file, 'r', encoding="utf-8") as f:
         encrypted_data = json.load(f)
-    
+
     plaintext = decrypt_data(encrypted_data, key)
-    
+
     with open(output_file, 'wb') as f:
         f.write(plaintext)
 
 def detect_file_type(file_path):
     return os.path.splitext(file_path)[1].lower()
 
-
 if __name__ == "__main__":
-    # Command line usage: python Encrypt.py <input_file_path> <output_file_path>
-    if len(sys.argv) < 3:
-        print("Usage: python Encrypt.py <input_file> <output_file>")
+    # Command line usage: python Encrypt.py <mode> <input_file_path> <output_file_path>
+    if len(sys.argv) < 4:
+        print("Usage: python Encrypt.py <mode> <input_file> <output_file>")
         exit()
 
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
+    mode = sys.argv[1]  # mode can be "encrypt" or "decrypt"
+    input_file = sys.argv[2]
+    output_file = sys.argv[3]
     file_type = detect_file_type(input_file)
 
     key_file = "key"
@@ -108,23 +109,35 @@ if __name__ == "__main__":
         key = get_random_bytes(32)
         save_key(key_file, key)
 
-    if file_type == ".pdf":
-        encrypt_file(input_file, output_file, key)
-        print(f"[SUCCESS] PDF encrypted successfully. Output saved to {output_file}")
-    else:
-        json_file = "converted_data.json"
-        if file_type == ".csv":
-            json_data = csv_to_json(input_file)
-        elif file_type == ".xml":
-            json_data = xml_to_json(input_file)
-        elif file_type == ".txt":
-            json_data = txt_to_json(input_file)
+    if mode == "encrypt":
+        if file_type == ".pdf":
+            encrypt_file(input_file, output_file, key)
+            print(f"[SUCCESS] PDF encrypted successfully. Output saved to {output_file}")
         else:
-            print("[ERROR] Unsupported file type!")
-            exit()
-        
-        with open(json_file, "w", encoding="utf-8") as f:
-            f.write(json_data)
+            json_file = "converted_data.json"
+            if file_type == ".csv":
+                json_data = csv_to_json(input_file)
+            elif file_type == ".xml":
+                json_data = xml_to_json(input_file)
+            elif file_type == ".txt":
+                json_data = txt_to_json(input_file)
+            else:
+                print("[ERROR] Unsupported file type!")
+                exit()
+            
+            with open(json_file, "w", encoding="utf-8") as f:
+                f.write(json_data)
 
-        encrypt_file(json_file, output_file, key)
-        print(f"[SUCCESS] Non-PDF file converted to JSON and encrypted. Output saved to {output_file}")
+            encrypt_file(json_file, output_file, key)
+            print(f"[SUCCESS] Non-PDF file converted to JSON and encrypted. Output saved to {output_file}")
+
+    elif mode == "decrypt":
+        if file_type == ".json":
+            decrypt_file(input_file, output_file, key)
+            print(f"[SUCCESS] File decrypted successfully. Output saved to {output_file}")
+        else:
+            print("[ERROR] Only .json files can be decrypted.")
+            exit()
+    else:
+        print("[ERROR] Invalid mode. Use 'encrypt' or 'decrypt'.")
+        exit()

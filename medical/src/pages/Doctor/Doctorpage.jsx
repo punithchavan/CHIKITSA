@@ -78,49 +78,48 @@ function Doctorpage() {
     }
   };
 
-  // 2. Update handleMedicalRecordSubmit function
-const handleMedicalRecordSubmit = async () => {
-  if (!selectedPatient) return;
+  const handleMedicalRecordSubmit = async () => {
+    if (!selectedPatient) return;
 
-  try {
-    const patientResponse = await axios.get(`http://localhost:5000/api/patient/by-name/${selectedPatient.name}`);
-    if (!patientResponse.data) {
-      alert("Patient not found.");
-      return;
+    try {
+      const patientResponse = await axios.get(`http://localhost:5000/api/patient/by-name/${selectedPatient.name}`);
+      if (!patientResponse.data) {
+        alert("Patient not found.");
+        return;
+      }
+
+      const patientId = patientResponse.data._id;
+      const doctorId = doctorDetails._id;
+
+      const formData = new FormData();
+      if (selectedFile) {
+        formData.append('file', selectedFile);
+      }
+      formData.append('patientId', patientId);
+      formData.append('doctorId', doctorId);
+      formData.append('description', description);
+
+      if (existingMedicalRecord) {
+        formData.append('recordId', existingMedicalRecord._id);
+        await axios.put('http://localhost:5000/api/update-medical-record', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        alert("Medical record updated successfully");
+      } else {
+        await axios.post('http://localhost:5000/api/create-medical-record', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        alert("Medical record created successfully");
+      }
+
+      setShowModal(false);
+      setSelectedFile(null);
+      setDescription("");
+      setExistingMedicalRecord(null);
+    } catch (error) {
+      alert(`Failed to ${existingMedicalRecord ? 'update' : 'create'} medical record: ${error.message}`);
     }
-
-    const patientId = patientResponse.data._id;
-    const doctorId = doctorDetails._id;
-
-    const formData = new FormData();
-    if (selectedFile) {
-      formData.append('file', selectedFile);
-    }
-    formData.append('patientId', patientId);
-    formData.append('doctorId', doctorId);
-    formData.append('description', description);
-
-    if (existingMedicalRecord) {
-      formData.append('recordId', existingMedicalRecord._id);
-      await axios.put('http://localhost:5000/api/update-medical-record', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      alert("Medical record updated successfully");
-    } else {
-      await axios.post('http://localhost:5000/api/create-medical-record', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      alert("Medical record created successfully");
-    }
-
-    setShowModal(false);
-    setSelectedFile(null);
-    setDescription("");
-    setExistingMedicalRecord(null);
-  } catch (error) {
-    alert(`Failed to ${existingMedicalRecord ? 'update' : 'create'} medical record: ${error.message}`);
-  }
-};
+  };
 
   const handleStatusChange = async (status) => {
     if (!selectedPatient || !selectedPatient.appointmentId) return;
@@ -142,16 +141,14 @@ const handleMedicalRecordSubmit = async () => {
   const handlePatientClick = async (patient) => {
     setSelectedPatient(patient);
     setAppointmentStatus(patient.status || "scheduled");
-    
-    // Check if there's an existing medical record
+
     const hasExistingRecord = await fetchExistingMedicalRecord(patient.name);
-    
-    // If no existing record, reset the form
+
     if (!hasExistingRecord) {
       setDescription("");
       setSelectedFile(null);
     }
-    
+
     setShowModal(true);
   };
 
@@ -163,33 +160,35 @@ const handleMedicalRecordSubmit = async () => {
     setExistingMedicalRecord(null);
     setAppointmentStatus("");
   };
+
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     window.location.href = '/';
   };
-  
-const handleViewAllMedicalRecords = async (appointment) => {
-  try {
-    const patientResponse = await axios.get(`http://localhost:5000/api/patient/by-name/${appointment.name}`);
-    if (!patientResponse.data) {
-      alert("Patient not found.");
-      return;
-    }
 
-    const patientId = patientResponse.data._id;
-    const medicalRecordsResponse = await axios.get(`http://localhost:5000/api/patient/${patientId}/medical-records`);
-    if (medicalRecordsResponse.data && medicalRecordsResponse.data.length > 0) {
-      setSelectedPatient({ ...appointment, medicalRecords: medicalRecordsResponse.data });
-      setShowModal(true);
-    } else {
-      alert("No medical records found for this patient.");
+  const handleViewAllMedicalRecords = async (appointment) => {
+    try {
+      const patientResponse = await axios.get(`http://localhost:5000/api/patient/by-name/${appointment.name}`);
+      if (!patientResponse.data) {
+        alert("Patient not found.");
+        return;
+      }
+
+      const patientId = patientResponse.data._id;
+      const medicalRecordsResponse = await axios.get(`http://localhost:5000/api/patient/${patientId}/all-medical-records`);
+      if (medicalRecordsResponse.data && medicalRecordsResponse.data.length > 0) {
+        setSelectedPatient({ ...appointment, medicalRecords: medicalRecordsResponse.data });
+        setShowModal(true);
+      } else {
+        alert("No medical records found for this patient.");
+      }
+    } catch (error) {
+      console.error("Error fetching medical records:", error);
+      alert("Failed to fetch medical records. Please try again.");
     }
-  } catch (error) {
-    console.error("Error fetching medical records:", error);
-    alert("Failed to fetch medical records. Please try again.");
-  }
-};
+  };
+
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f0f0f0] overflow-hidden">
@@ -388,7 +387,7 @@ const handleViewAllMedicalRecords = async (appointment) => {
                 <p className="text-gray-700 mt-1"><strong>Date:</strong> {new Date(record.date).toLocaleDateString()}</p>
                 {record.pdf && (
                   <a
-                    href={`http://localhost:5000/${record.pdf}`}
+                  href={`http://localhost:5000/${record.pdf.replace('.json', '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 underline mt-2 inline-block"
