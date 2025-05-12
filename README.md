@@ -130,8 +130,8 @@ The backend server should be started from the following directories as applicabl
 You can find the detailed project documentation here:
 
 - [📑 Software Requirements Specification ](./documentation/Chikitsa.pdf)
-- [📑 Statement of Work ](./documentation/Statement_of_Work_v2.0.pdf)
-- [📑 Software Design Specification ](./documentation/sds.pdf)
+- [📑 Statement of Work ](./documentation/SoW.pdf)
+- [📑 Software Design Specification ](./documentation/SDS.pdf)
 - [📑 Software Test Plan ](./documentation/software_test_plan.xlsx)
 
 
