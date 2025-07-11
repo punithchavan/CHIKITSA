@@ -137,13 +137,13 @@ You can find the detailed project documentation here:
 
 ## 👥 Team Members
 
-- **K Harpith Rao** (Frontend & Backend)
+- **K Harpith Rao** (Frontend and Backend)
 - **C Srikanth** (Backend)  
 - **Dev M Bandhiya** (UI/UX, Encryption)  
 - **G Aditya Vardhan** (Backend, UI/UX)  
 - **K Sai Bharat Kumar Varma** (Frontend, Encryption)   
-- **Punith Chavan** (Frontend)  
-- **Harsha B** (Frontend, Deployment)
+- **Punith Chavan** (Frontend and Backend)  
+- **Harsha B** (Frontend and Deployment)
 
 
 ## 📜 License
